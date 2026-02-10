@@ -7,7 +7,7 @@ export default {
         return ctx.badRequest("username, email, password and role required");
       }
 
-      const allowedRoles = ["User", "Client"];
+      const allowedRoles = ["User", "Client","Public"];
       if (!allowedRoles.includes(role)) {
         return ctx.forbidden("Invalid role");
       }
