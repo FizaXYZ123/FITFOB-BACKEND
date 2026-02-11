@@ -107,26 +107,37 @@ export default {
       // ---------- ROLE ----------
       const roleRecord = data.role
         ? await strapi.db
-            .query("plugin::users-permissions.role")
-            .findOne({ where: { name: data.role } })
+          .query("plugin::users-permissions.role")
+          .findOne({ where: { name: data.role } })
         : await strapi.db
-            .query("plugin::users-permissions.role")
-            .findOne({ where: { type: "authenticated" } });
+          .query("plugin::users-permissions.role")
+          .findOne({ where: { type: "authenticated" } });
 
       // ---------- CREATE STRAPI USER ----------
       strapi.log.info("[STRAPI] Creating user in database...");
 
       const userService = strapi.plugin("users-permissions").service("user");
 
-      const user = await userService.add({
+      // STEP 1 — create base user (only core fields allowed)
+      const baseUser = await userService.add({
         username,
         email: emailForSchema,
-        phoneNumber,
         password: data.password,
         role: roleRecord.id,
         provider: "local",
         confirmed: true,
       });
+
+      // STEP 2 — update custom fields
+      const user = await strapi.db
+        .query("plugin::users-permissions.user")
+        .update({
+          where: { id: baseUser.id },
+          data: {
+            phoneNumber: phoneNumber,
+          },
+        });
+
 
       strapi.log.info(`[STRAPI] User created successfully (ID=${user.id})`);
 
@@ -167,7 +178,7 @@ export default {
 
       strapi.log.info("[CLEANUP] Pending signup removed");
 
-      
+
       const jwt = strapi
         .plugin("users-permissions")
         .service("jwt")
