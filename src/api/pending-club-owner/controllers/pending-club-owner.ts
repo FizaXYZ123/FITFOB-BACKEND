@@ -1,6 +1,6 @@
 import { Context } from "koa";
 import { generateClubId } from "../../../utils/generateClubId";
-
+import { normalizeWeekdayScheduling, orderWeekdayScheduling } from "../../../utils/weekdayScheduling";
 const PENDING_UID = "api::pending-club-owner.pending-club-owner";
 const GOV_DOC_UID = "api::club-owner-document.club-owner-document";
 const CLUB_UID = "api::club-owner.club-owner";
@@ -65,7 +65,7 @@ async function validateBeforeSubmission(draft: any) {
   if (!draft.clubAddress || !draft.city || !draft.state || !draft.pincode)
     return "Please complete address details";
 
-  if (!draft.openingTime || !draft.closingTime || !draft.clubCategory)
+  if (!draft.weekdayScheduling || !draft.clubCategory)
     return "Please configure your club";
 
   const docs = await strapi.entityService.findMany(GOV_DOC_UID, {
@@ -116,6 +116,9 @@ export async function createClubOwnerFromPending(userId: number) {
   const logoId = draft.logo?.id ?? null;
   const photoIds = draft.clubPhotos?.map((p: any) => p.id) ?? [];
   const docIds = (myDocs || []).map((d: any) => d.id);
+const weekdayScheduling = orderWeekdayScheduling(
+  normalizeWeekdayScheduling(draft.weekdayScheduling)
+);
   const newClubId = await generateClubId();
 
   const clubOwner = await strapi.entityService.create(CLUB_UID, {
@@ -126,10 +129,7 @@ export async function createClubOwnerFromPending(userId: number) {
       phoneNumber: draft.phoneNumber,
       email: draft.email,
       clubName: draft.clubName,
-      openingTime: draft.openingTime,
-      closingTime: draft.closingTime,
-      weekday: draft.weekday,
-      weekend: draft.weekend,
+weekdayScheduling,
       clubCategory: draft.clubCategory,
       facilities: draft.facilities,
       services: draft.services,
@@ -189,6 +189,11 @@ export default {
       /* ================= PENDING CLUB OWNER EXISTS ================= */
 
       if (draft) {
+        if (draft.weekdayScheduling) {
+          draft.weekdayScheduling = orderWeekdayScheduling(
+            draft.weekdayScheduling,
+          );
+        }
         return ctx.send({
           currentStep: draft.currentStep,
           status: user.verification_status,
@@ -295,10 +300,7 @@ export default {
       data: {
         services: body.services,
         facilities: body.facilities,
-        openingTime: body.openingTime,
-        closingTime: body.closingTime,
-        weekday: body.weekday,
-        weekend: body.weekend,
+        weekdayScheduling: normalizeWeekdayScheduling(body.weekdayScheduling),
         clubCategory: body.clubCategory,
         currentStep: Math.max(draft.currentStep || 1, 5),
       },
@@ -550,6 +552,12 @@ export default {
 
       if (!entity || !entity.user) {
         return ctx.notFound("Club owner not found");
+      }
+
+      if (entity.weekdayScheduling) {
+        entity.weekdayScheduling = orderWeekdayScheduling(
+          entity.weekdayScheduling,
+        );
       }
 
       ctx.body = entity;

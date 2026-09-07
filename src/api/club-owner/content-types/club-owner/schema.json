@@ -39,11 +39,8 @@
     "clubName": {
       "type": "string"
     },
-    "openingTime": {
-      "type": "time"
-    },
-    "closingTime": {
-      "type": "time"
+    "weekdayScheduling": {
+      "type": "json"
     },
     "clubPhotos": {
       "type": "media",
@@ -54,12 +51,6 @@
         "videos",
         "audios"
       ]
-    },
-    "weekday": {
-      "type": "string"
-    },
-    "weekend": {
-      "type": "string"
     },
     "facilities": {
       "type": "json"
@@ -100,7 +91,6 @@
     "clubCategory": {
       "type": "enumeration",
       "enum": [
-        "Basic",
         "Premium",
         "Luxury"
       ]

@@ -1,5 +1,6 @@
 import { factories } from "@strapi/strapi";
 import { Context } from "koa";
+import { orderWeekdayScheduling } from "../../../utils/weekdayScheduling";
 
 const POPULATE: any = {
   user: true,
@@ -160,6 +161,12 @@ export default factories.createCoreController(
           return ctx.notFound("Club owner not found");
         }
 
+        if (entity.weekdayScheduling) {
+          entity.weekdayScheduling = orderWeekdayScheduling(
+            entity.weekdayScheduling,
+          );
+        }
+
         ctx.body = entity;
       } catch (err) {
         strapi.log.error("GET CLUB OWNER ERROR:", err);
@@ -268,6 +275,12 @@ export default factories.createCoreController(
 
         if (!clubOwner) {
           return ctx.notFound("Club owner not found");
+        }
+
+        if (clubOwner.weekdayScheduling) {
+          clubOwner.weekdayScheduling = orderWeekdayScheduling(
+            clubOwner.weekdayScheduling,
+          );
         }
 
         ctx.body = clubOwner;

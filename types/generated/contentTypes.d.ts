@@ -606,13 +606,12 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::client-checkin.client-checkin'
     >;
-    closingTime: Schema.Attribute.Time;
     club_owner_documents: Schema.Attribute.Relation<
       'oneToMany',
       'api::club-owner-document.club-owner-document'
     >;
     clubAddress: Schema.Attribute.String;
-    clubCategory: Schema.Attribute.Enumeration<['Basic', 'Premium', 'Luxury']>;
+    clubCategory: Schema.Attribute.Enumeration<['Premium', 'Luxury']>;
     clubId: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
@@ -643,7 +642,6 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     logo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     longitude: Schema.Attribute.String;
-    openingTime: Schema.Attribute.Time;
     ownerName: Schema.Attribute.String;
     phoneNumber: Schema.Attribute.String;
     pincode: Schema.Attribute.String;
@@ -658,8 +656,7 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       'oneToOne',
       'plugin::users-permissions.user'
     >;
-    weekday: Schema.Attribute.String;
-    weekend: Schema.Attribute.String;
+    weekdayScheduling: Schema.Attribute.JSON;
   };
 }
 
@@ -985,13 +982,12 @@ export interface ApiPendingClubOwnerPendingClubOwner
   };
   attributes: {
     city: Schema.Attribute.String;
-    closingTime: Schema.Attribute.Time;
     club_owner_documents: Schema.Attribute.Relation<
       'oneToMany',
       'api::club-owner-document.club-owner-document'
     >;
     clubAddress: Schema.Attribute.String;
-    clubCategory: Schema.Attribute.Enumeration<['Basic', 'Premium', 'Luxury']>;
+    clubCategory: Schema.Attribute.Enumeration<['Premium', 'Luxury']>;
     clubName: Schema.Attribute.String;
     clubPhotos: Schema.Attribute.Media<'images', true>;
     createdAt: Schema.Attribute.DateTime;
@@ -1009,7 +1005,6 @@ export interface ApiPendingClubOwnerPendingClubOwner
       Schema.Attribute.Private;
     logo: Schema.Attribute.Media<'images'>;
     longitude: Schema.Attribute.String;
-    openingTime: Schema.Attribute.Time;
     ownerName: Schema.Attribute.String;
     phoneNumber: Schema.Attribute.String;
     pincode: Schema.Attribute.String;
@@ -1025,8 +1020,7 @@ export interface ApiPendingClubOwnerPendingClubOwner
       'oneToOne',
       'plugin::users-permissions.user'
     >;
-    weekday: Schema.Attribute.String;
-    weekend: Schema.Attribute.String;
+    weekdayScheduling: Schema.Attribute.JSON;
   };
 }
 

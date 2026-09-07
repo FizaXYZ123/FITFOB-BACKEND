@@ -14,7 +14,7 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
     },
-    "x-generation-date": "2026-09-03T13:29:37.145Z"
+    "x-generation-date": "2026-09-07T07:19:04.801Z"
   },
   "x-strapi-config": {
     "plugins": [
@@ -10797,16 +10797,7 @@
                       "clubName": {
                         "type": "string"
                       },
-                      "openingTime": {
-                        "type": "string",
-                        "format": "time",
-                        "example": "12:54.000"
-                      },
-                      "closingTime": {
-                        "type": "string",
-                        "format": "time",
-                        "example": "12:54.000"
-                      },
+                      "weekdayScheduling": {},
                       "clubPhotos": {
                         "type": "array",
                         "items": {
@@ -10981,12 +10972,6 @@
                             }
                           }
                         }
-                      },
-                      "weekday": {
-                        "type": "string"
-                      },
-                      "weekend": {
-                        "type": "string"
                       },
                       "facilities": {},
                       "services": {},
@@ -11486,22 +11471,7 @@
                                 },
                                 "services": {},
                                 "facilities": {},
-                                "openingTime": {
-                                  "type": "string",
-                                  "format": "time",
-                                  "example": "12:54.000"
-                                },
-                                "closingTime": {
-                                  "type": "string",
-                                  "format": "time",
-                                  "example": "12:54.000"
-                                },
-                                "weekday": {
-                                  "type": "string"
-                                },
-                                "weekend": {
-                                  "type": "string"
-                                },
+                                "weekdayScheduling": {},
                                 "clubPhotos": {
                                   "type": "array",
                                   "items": {
@@ -11701,7 +11671,6 @@
                                 "clubCategory": {
                                   "type": "string",
                                   "enum": [
-                                    "Basic",
                                     "Premium",
                                     "Luxury"
                                   ]
@@ -11858,7 +11827,6 @@
                       "clubCategory": {
                         "type": "string",
                         "enum": [
-                          "Basic",
                           "Premium",
                           "Luxury"
                         ]
@@ -15730,16 +15698,7 @@
                             "clubName": {
                               "type": "string"
                             },
-                            "openingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
-                            "closingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
+                            "weekdayScheduling": {},
                             "clubPhotos": {
                               "type": "array",
                               "items": {
@@ -15914,12 +15873,6 @@
                                   }
                                 }
                               }
-                            },
-                            "weekday": {
-                              "type": "string"
-                            },
-                            "weekend": {
-                              "type": "string"
                             },
                             "facilities": {},
                             "services": {},
@@ -16419,22 +16372,7 @@
                                       },
                                       "services": {},
                                       "facilities": {},
-                                      "openingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "closingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "weekday": {
-                                        "type": "string"
-                                      },
-                                      "weekend": {
-                                        "type": "string"
-                                      },
+                                      "weekdayScheduling": {},
                                       "clubPhotos": {
                                         "type": "array",
                                         "items": {
@@ -16634,7 +16572,6 @@
                                       "clubCategory": {
                                         "type": "string",
                                         "enum": [
-                                          "Basic",
                                           "Premium",
                                           "Luxury"
                                         ]
@@ -16791,7 +16728,6 @@
                             "clubCategory": {
                               "type": "string",
                               "enum": [
-                                "Basic",
                                 "Premium",
                                 "Luxury"
                               ]
@@ -18037,16 +17973,7 @@
               "clubName": {
                 "type": "string"
               },
-              "openingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
-              "closingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
+              "weekdayScheduling": {},
               "clubPhotos": {
                 "type": "array",
                 "items": {
@@ -18060,12 +17987,6 @@
                   ],
                   "example": "string or id"
                 }
-              },
-              "weekday": {
-                "type": "string"
-              },
-              "weekend": {
-                "type": "string"
               },
               "facilities": {},
               "services": {},
@@ -18115,7 +18036,6 @@
               "clubCategory": {
                 "type": "string",
                 "enum": [
-                  "Basic",
                   "Premium",
                   "Luxury"
                 ]
@@ -19372,16 +19292,7 @@
           "clubName": {
             "type": "string"
           },
-          "openingTime": {
-            "type": "string",
-            "format": "time",
-            "example": "12:54.000"
-          },
-          "closingTime": {
-            "type": "string",
-            "format": "time",
-            "example": "12:54.000"
-          },
+          "weekdayScheduling": {},
           "clubPhotos": {
             "type": "array",
             "items": {
@@ -19556,12 +19467,6 @@
                 }
               }
             }
-          },
-          "weekday": {
-            "type": "string"
-          },
-          "weekend": {
-            "type": "string"
           },
           "facilities": {},
           "services": {},
@@ -20703,16 +20608,7 @@
                             "clubName": {
                               "type": "string"
                             },
-                            "openingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
-                            "closingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
+                            "weekdayScheduling": {},
                             "clubPhotos": {
                               "type": "array",
                               "items": {
@@ -20887,12 +20783,6 @@
                                   }
                                 }
                               }
-                            },
-                            "weekday": {
-                              "type": "string"
-                            },
-                            "weekend": {
-                              "type": "string"
                             },
                             "facilities": {},
                             "services": {},
@@ -21392,22 +21282,7 @@
                                       },
                                       "services": {},
                                       "facilities": {},
-                                      "openingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "closingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "weekday": {
-                                        "type": "string"
-                                      },
-                                      "weekend": {
-                                        "type": "string"
-                                      },
+                                      "weekdayScheduling": {},
                                       "clubPhotos": {
                                         "type": "array",
                                         "items": {
@@ -21607,7 +21482,6 @@
                                       "clubCategory": {
                                         "type": "string",
                                         "enum": [
-                                          "Basic",
                                           "Premium",
                                           "Luxury"
                                         ]
@@ -21764,7 +21638,6 @@
                             "clubCategory": {
                               "type": "string",
                               "enum": [
-                                "Basic",
                                 "Premium",
                                 "Luxury"
                               ]
@@ -22835,7 +22708,6 @@
           "clubCategory": {
             "type": "string",
             "enum": [
-              "Basic",
               "Premium",
               "Luxury"
             ]
@@ -24431,16 +24303,7 @@
               "clubName": {
                 "type": "string"
               },
-              "openingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
-              "closingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
+              "weekdayScheduling": {},
               "clubPhotos": {
                 "type": "array",
                 "items": {
@@ -24615,12 +24478,6 @@
                     }
                   }
                 }
-              },
-              "weekday": {
-                "type": "string"
-              },
-              "weekend": {
-                "type": "string"
               },
               "facilities": {},
               "services": {},
@@ -26940,22 +26797,7 @@
                         },
                         "services": {},
                         "facilities": {},
-                        "openingTime": {
-                          "type": "string",
-                          "format": "time",
-                          "example": "12:54.000"
-                        },
-                        "closingTime": {
-                          "type": "string",
-                          "format": "time",
-                          "example": "12:54.000"
-                        },
-                        "weekday": {
-                          "type": "string"
-                        },
-                        "weekend": {
-                          "type": "string"
-                        },
+                        "weekdayScheduling": {},
                         "clubPhotos": {
                           "type": "array",
                           "items": {
@@ -27155,7 +26997,6 @@
                         "clubCategory": {
                           "type": "string",
                           "enum": [
-                            "Basic",
                             "Premium",
                             "Luxury"
                           ]
@@ -27312,7 +27153,6 @@
               "clubCategory": {
                 "type": "string",
                 "enum": [
-                  "Basic",
                   "Premium",
                   "Luxury"
                 ]
@@ -29740,16 +29580,7 @@
                             "clubName": {
                               "type": "string"
                             },
-                            "openingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
-                            "closingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
+                            "weekdayScheduling": {},
                             "clubPhotos": {
                               "type": "array",
                               "items": {
@@ -29924,12 +29755,6 @@
                                   }
                                 }
                               }
-                            },
-                            "weekday": {
-                              "type": "string"
-                            },
-                            "weekend": {
-                              "type": "string"
                             },
                             "facilities": {},
                             "services": {},
@@ -30429,22 +30254,7 @@
                                       },
                                       "services": {},
                                       "facilities": {},
-                                      "openingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "closingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "weekday": {
-                                        "type": "string"
-                                      },
-                                      "weekend": {
-                                        "type": "string"
-                                      },
+                                      "weekdayScheduling": {},
                                       "clubPhotos": {
                                         "type": "array",
                                         "items": {
@@ -30644,7 +30454,6 @@
                                       "clubCategory": {
                                         "type": "string",
                                         "enum": [
-                                          "Basic",
                                           "Premium",
                                           "Luxury"
                                         ]
@@ -30801,7 +30610,6 @@
                             "clubCategory": {
                               "type": "string",
                               "enum": [
-                                "Basic",
                                 "Premium",
                                 "Luxury"
                               ]
@@ -33239,16 +33047,7 @@
               "clubName": {
                 "type": "string"
               },
-              "openingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
-              "closingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
+              "weekdayScheduling": {},
               "clubPhotos": {
                 "type": "array",
                 "items": {
@@ -33423,12 +33222,6 @@
                     }
                   }
                 }
-              },
-              "weekday": {
-                "type": "string"
-              },
-              "weekend": {
-                "type": "string"
               },
               "facilities": {},
               "services": {},
@@ -35748,22 +35541,7 @@
                         },
                         "services": {},
                         "facilities": {},
-                        "openingTime": {
-                          "type": "string",
-                          "format": "time",
-                          "example": "12:54.000"
-                        },
-                        "closingTime": {
-                          "type": "string",
-                          "format": "time",
-                          "example": "12:54.000"
-                        },
-                        "weekday": {
-                          "type": "string"
-                        },
-                        "weekend": {
-                          "type": "string"
-                        },
+                        "weekdayScheduling": {},
                         "clubPhotos": {
                           "type": "array",
                           "items": {
@@ -35963,7 +35741,6 @@
                         "clubCategory": {
                           "type": "string",
                           "enum": [
-                            "Basic",
                             "Premium",
                             "Luxury"
                           ]
@@ -36120,7 +35897,6 @@
               "clubCategory": {
                 "type": "string",
                 "enum": [
-                  "Basic",
                   "Premium",
                   "Luxury"
                 ]
@@ -38559,16 +38335,7 @@
                       "clubName": {
                         "type": "string"
                       },
-                      "openingTime": {
-                        "type": "string",
-                        "format": "time",
-                        "example": "12:54.000"
-                      },
-                      "closingTime": {
-                        "type": "string",
-                        "format": "time",
-                        "example": "12:54.000"
-                      },
+                      "weekdayScheduling": {},
                       "clubPhotos": {
                         "type": "array",
                         "items": {
@@ -38743,12 +38510,6 @@
                             }
                           }
                         }
-                      },
-                      "weekday": {
-                        "type": "string"
-                      },
-                      "weekend": {
-                        "type": "string"
                       },
                       "facilities": {},
                       "services": {},
@@ -39248,22 +39009,7 @@
                                 },
                                 "services": {},
                                 "facilities": {},
-                                "openingTime": {
-                                  "type": "string",
-                                  "format": "time",
-                                  "example": "12:54.000"
-                                },
-                                "closingTime": {
-                                  "type": "string",
-                                  "format": "time",
-                                  "example": "12:54.000"
-                                },
-                                "weekday": {
-                                  "type": "string"
-                                },
-                                "weekend": {
-                                  "type": "string"
-                                },
+                                "weekdayScheduling": {},
                                 "clubPhotos": {
                                   "type": "array",
                                   "items": {
@@ -39463,7 +39209,6 @@
                                 "clubCategory": {
                                   "type": "string",
                                   "enum": [
-                                    "Basic",
                                     "Premium",
                                     "Luxury"
                                   ]
@@ -39620,7 +39365,6 @@
                       "clubCategory": {
                         "type": "string",
                         "enum": [
-                          "Basic",
                           "Premium",
                           "Luxury"
                         ]
@@ -44028,16 +43772,7 @@
                             "clubName": {
                               "type": "string"
                             },
-                            "openingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
-                            "closingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
+                            "weekdayScheduling": {},
                             "clubPhotos": {
                               "type": "array",
                               "items": {
@@ -44212,12 +43947,6 @@
                                   }
                                 }
                               }
-                            },
-                            "weekday": {
-                              "type": "string"
-                            },
-                            "weekend": {
-                              "type": "string"
                             },
                             "facilities": {},
                             "services": {},
@@ -44717,22 +44446,7 @@
                                       },
                                       "services": {},
                                       "facilities": {},
-                                      "openingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "closingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "weekday": {
-                                        "type": "string"
-                                      },
-                                      "weekend": {
-                                        "type": "string"
-                                      },
+                                      "weekdayScheduling": {},
                                       "clubPhotos": {
                                         "type": "array",
                                         "items": {
@@ -44932,7 +44646,6 @@
                                       "clubCategory": {
                                         "type": "string",
                                         "enum": [
-                                          "Basic",
                                           "Premium",
                                           "Luxury"
                                         ]
@@ -45089,7 +44802,6 @@
                             "clubCategory": {
                               "type": "string",
                               "enum": [
-                                "Basic",
                                 "Premium",
                                 "Luxury"
                               ]
@@ -48413,16 +48125,7 @@
                       "clubName": {
                         "type": "string"
                       },
-                      "openingTime": {
-                        "type": "string",
-                        "format": "time",
-                        "example": "12:54.000"
-                      },
-                      "closingTime": {
-                        "type": "string",
-                        "format": "time",
-                        "example": "12:54.000"
-                      },
+                      "weekdayScheduling": {},
                       "clubPhotos": {
                         "type": "array",
                         "items": {
@@ -48597,12 +48300,6 @@
                             }
                           }
                         }
-                      },
-                      "weekday": {
-                        "type": "string"
-                      },
-                      "weekend": {
-                        "type": "string"
                       },
                       "facilities": {},
                       "services": {},
@@ -49102,22 +48799,7 @@
                                 },
                                 "services": {},
                                 "facilities": {},
-                                "openingTime": {
-                                  "type": "string",
-                                  "format": "time",
-                                  "example": "12:54.000"
-                                },
-                                "closingTime": {
-                                  "type": "string",
-                                  "format": "time",
-                                  "example": "12:54.000"
-                                },
-                                "weekday": {
-                                  "type": "string"
-                                },
-                                "weekend": {
-                                  "type": "string"
-                                },
+                                "weekdayScheduling": {},
                                 "clubPhotos": {
                                   "type": "array",
                                   "items": {
@@ -49317,7 +48999,6 @@
                                 "clubCategory": {
                                   "type": "string",
                                   "enum": [
-                                    "Basic",
                                     "Premium",
                                     "Luxury"
                                   ]
@@ -49474,7 +49155,6 @@
                       "clubCategory": {
                         "type": "string",
                         "enum": [
-                          "Basic",
                           "Premium",
                           "Luxury"
                         ]
@@ -53285,16 +52965,7 @@
                             "clubName": {
                               "type": "string"
                             },
-                            "openingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
-                            "closingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
+                            "weekdayScheduling": {},
                             "clubPhotos": {
                               "type": "array",
                               "items": {
@@ -53469,12 +53140,6 @@
                                   }
                                 }
                               }
-                            },
-                            "weekday": {
-                              "type": "string"
-                            },
-                            "weekend": {
-                              "type": "string"
                             },
                             "facilities": {},
                             "services": {},
@@ -53974,22 +53639,7 @@
                                       },
                                       "services": {},
                                       "facilities": {},
-                                      "openingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "closingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "weekday": {
-                                        "type": "string"
-                                      },
-                                      "weekend": {
-                                        "type": "string"
-                                      },
+                                      "weekdayScheduling": {},
                                       "clubPhotos": {
                                         "type": "array",
                                         "items": {
@@ -54189,7 +53839,6 @@
                                       "clubCategory": {
                                         "type": "string",
                                         "enum": [
-                                          "Basic",
                                           "Premium",
                                           "Luxury"
                                         ]
@@ -54346,7 +53995,6 @@
                             "clubCategory": {
                               "type": "string",
                               "enum": [
-                                "Basic",
                                 "Premium",
                                 "Luxury"
                               ]
@@ -56067,22 +55715,7 @@
               },
               "services": {},
               "facilities": {},
-              "openingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
-              "closingTime": {
-                "type": "string",
-                "format": "time",
-                "example": "12:54.000"
-              },
-              "weekday": {
-                "type": "string"
-              },
-              "weekend": {
-                "type": "string"
-              },
+              "weekdayScheduling": {},
               "clubPhotos": {
                 "type": "array",
                 "items": {
@@ -56114,7 +55747,6 @@
               "clubCategory": {
                 "type": "string",
                 "enum": [
-                  "Basic",
                   "Premium",
                   "Luxury"
                 ]
@@ -58222,16 +57854,7 @@
                             "clubName": {
                               "type": "string"
                             },
-                            "openingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
-                            "closingTime": {
-                              "type": "string",
-                              "format": "time",
-                              "example": "12:54.000"
-                            },
+                            "weekdayScheduling": {},
                             "clubPhotos": {
                               "type": "array",
                               "items": {
@@ -58406,12 +58029,6 @@
                                   }
                                 }
                               }
-                            },
-                            "weekday": {
-                              "type": "string"
-                            },
-                            "weekend": {
-                              "type": "string"
                             },
                             "facilities": {},
                             "services": {},
@@ -58911,22 +58528,7 @@
                                       },
                                       "services": {},
                                       "facilities": {},
-                                      "openingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "closingTime": {
-                                        "type": "string",
-                                        "format": "time",
-                                        "example": "12:54.000"
-                                      },
-                                      "weekday": {
-                                        "type": "string"
-                                      },
-                                      "weekend": {
-                                        "type": "string"
-                                      },
+                                      "weekdayScheduling": {},
                                       "clubPhotos": {
                                         "type": "array",
                                         "items": {
@@ -59126,7 +58728,6 @@
                                       "clubCategory": {
                                         "type": "string",
                                         "enum": [
-                                          "Basic",
                                           "Premium",
                                           "Luxury"
                                         ]
@@ -59283,7 +58884,6 @@
                             "clubCategory": {
                               "type": "string",
                               "enum": [
-                                "Basic",
                                 "Premium",
                                 "Luxury"
                               ]
@@ -60545,22 +60145,7 @@
           },
           "services": {},
           "facilities": {},
-          "openingTime": {
-            "type": "string",
-            "format": "time",
-            "example": "12:54.000"
-          },
-          "closingTime": {
-            "type": "string",
-            "format": "time",
-            "example": "12:54.000"
-          },
-          "weekday": {
-            "type": "string"
-          },
-          "weekend": {
-            "type": "string"
-          },
+          "weekdayScheduling": {},
           "clubPhotos": {
             "type": "array",
             "items": {
@@ -60760,7 +60345,6 @@
           "clubCategory": {
             "type": "string",
             "enum": [
-              "Basic",
               "Premium",
               "Luxury"
             ]
