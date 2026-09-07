@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "club_services",
+  "info": {
+    "singularName": "club-service",
+    "pluralName": "club-services",
+    "displayName": "club-services"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

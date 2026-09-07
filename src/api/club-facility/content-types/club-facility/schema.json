@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "club_facilities",
+  "info": {
+    "singularName": "club-facility",
+    "pluralName": "club-facilities",
+    "displayName": "club-facilities"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "logo": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}
