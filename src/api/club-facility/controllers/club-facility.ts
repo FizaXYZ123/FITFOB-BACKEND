@@ -21,18 +21,31 @@ export default factories.createCoreController(
           filters.isActive = false;
         }
 
-        const entries: any[] = await strapi.entityService.findMany(
-          "api::club-facility.club-facility",
-          {
-            filters,
-            populate: {
-              logo: true,
+        let entries: any[] = [];
+        if ((strapi as any).documents) {
+          entries = await (strapi as any)
+            .documents("api::club-facility.club-facility")
+            .findMany({
+              filters,
+              populate: {
+                logo: true,
+              },
+              sort: { createdAt: "desc" },
+            });
+        } else {
+          entries = await strapi.entityService.findMany(
+            "api::club-facility.club-facility",
+            {
+              filters,
+              populate: {
+                logo: true,
+              },
+              sort: { createdAt: "desc" },
             },
-            sort: { createdAt: "desc" },
-          },
-        );
+          );
+        }
 
-        const data = entries.map((item: any) => {
+        const data = (entries || []).map((item: any) => {
           let logoUrl = null;
           if (item.logo?.url) {
             logoUrl = item.logo.url.startsWith("http")
@@ -41,6 +54,7 @@ export default factories.createCoreController(
           }
 
           return {
+            documentId: item.documentId || null,
             name: item.name,
             logo: logoUrl,
             isActive: item.isActive,
@@ -52,6 +66,243 @@ export default factories.createCoreController(
       } catch (error) {
         strapi.log.error("FETCH CLUB FACILITIES ERROR:", error);
         return ctx.internalServerError("Failed to fetch club facilities");
+      }
+    },
+
+    async findOne(ctx: Context) {
+      try {
+        const { id } = ctx.params;
+
+        if (!id) {
+          return ctx.badRequest("Document ID is required");
+        }
+
+        const documentId = String(id).trim();
+
+        let item: any = null;
+        if ((strapi as any).documents) {
+          item = await (strapi as any)
+            .documents("api::club-facility.club-facility")
+            .findOne({
+              documentId,
+              populate: {
+                logo: true,
+              },
+            });
+        }
+
+        if (!item) {
+          item = await strapi.db
+            .query("api::club-facility.club-facility")
+            .findOne({
+              where: { documentId },
+              populate: {
+                logo: true,
+              },
+            });
+        }
+
+        if (!item) {
+          return ctx.notFound("Club facility not found");
+        }
+
+        let logoUrl = null;
+        if (item.logo?.url) {
+          logoUrl = item.logo.url.startsWith("http")
+            ? item.logo.url
+            : `${strapi.config.server.url || ""}${item.logo.url}`;
+        }
+
+        const data = {
+          documentId: item.documentId || null,
+          name: item.name,
+          logo: logoUrl,
+          isActive: item.isActive,
+          createdAt: item.createdAt,
+        };
+
+        ctx.body = data;
+      } catch (error) {
+        strapi.log.error("FETCH CLUB FACILITY ERROR:", error);
+        return ctx.internalServerError("Failed to fetch club facility");
+      }
+    },
+
+    async update(ctx: Context) {
+      try {
+        const { id } = ctx.params;
+
+        if (!id) {
+          return ctx.badRequest("Document ID is required");
+        }
+
+        const documentId = String(id).trim();
+
+        const body = (ctx.request.body as any) ?? {};
+        const payload = body.data !== undefined ? body.data : body;
+
+        let item: any = null;
+
+        if ((strapi as any).documents) {
+          try {
+            item = await (strapi as any)
+              .documents("api::club-facility.club-facility")
+              .update({
+                documentId,
+                data: payload,
+                populate: {
+                  logo: true,
+                },
+              });
+          } catch (docErr) {
+            strapi.log.warn(
+              "documents.update error in club-facility update:",
+              docErr,
+            );
+          }
+        }
+
+        if (!item) {
+          const existing = await strapi.db
+            .query("api::club-facility.club-facility")
+            .findOne({
+              where: { documentId },
+            });
+
+          if (!existing) {
+            return ctx.notFound("Club facility not found");
+          }
+
+          await strapi.entityService.update(
+            "api::club-facility.club-facility",
+            existing.id,
+            {
+              data: payload,
+            },
+          );
+
+          if ((strapi as any).documents) {
+            item = await (strapi as any)
+              .documents("api::club-facility.club-facility")
+              .findOne({
+                documentId,
+                populate: {
+                  logo: true,
+                },
+              });
+          } else {
+            item = await strapi.entityService.findOne(
+              "api::club-facility.club-facility",
+              existing.id,
+              {
+                populate: {
+                  logo: true,
+                },
+              },
+            );
+          }
+        }
+
+        if (!item) {
+          return ctx.notFound("Club facility not found");
+        }
+
+        let logoUrl = null;
+        if (item.logo?.url) {
+          logoUrl = item.logo.url.startsWith("http")
+            ? item.logo.url
+            : `${strapi.config.server.url || ""}${item.logo.url}`;
+        }
+
+        const data = {
+          documentId: item.documentId || null,
+          name: item.name,
+          logo: logoUrl,
+          isActive: item.isActive,
+          createdAt: item.createdAt,
+        };
+
+        ctx.body = data;
+      } catch (error) {
+        strapi.log.error("UPDATE CLUB FACILITY ERROR:", error);
+        return ctx.internalServerError("Failed to update club facility");
+      }
+    },
+
+    async create(ctx: Context) {
+      try {
+        const body = (ctx.request.body as any) ?? {};
+        const payload = body.data !== undefined ? body.data : body;
+
+        let item: any = null;
+
+        if ((strapi as any).documents) {
+          try {
+            item = await (strapi as any)
+              .documents("api::club-facility.club-facility")
+              .create({
+                data: payload,
+                populate: {
+                  logo: true,
+                },
+              });
+          } catch (docErr) {
+            strapi.log.warn(
+              "documents.create error in club-facility create:",
+              docErr,
+            );
+          }
+        }
+
+        if (!item) {
+          const created = await strapi.entityService.create(
+            "api::club-facility.club-facility",
+            {
+              data: payload,
+            },
+          );
+
+          if ((strapi as any).documents && (created as any)?.documentId) {
+            item = await (strapi as any)
+              .documents("api::club-facility.club-facility")
+              .findOne({
+                documentId: (created as any).documentId,
+                populate: {
+                  logo: true,
+                },
+              });
+          } else {
+            item = await strapi.entityService.findOne(
+              "api::club-facility.club-facility",
+              created.id,
+              {
+                populate: {
+                  logo: true,
+                },
+              },
+            );
+          }
+        }
+
+        let logoUrl = null;
+        if (item?.logo?.url) {
+          logoUrl = item.logo.url.startsWith("http")
+            ? item.logo.url
+            : `${strapi.config.server.url || ""}${item.logo.url}`;
+        }
+
+        const data = {
+          documentId: item?.documentId || null,
+          name: item?.name,
+          logo: logoUrl,
+          isActive: item?.isActive,
+          createdAt: item?.createdAt,
+        };
+
+        ctx.body = data;
+      } catch (error) {
+        strapi.log.error("CREATE CLUB FACILITY ERROR:", error);
+        return ctx.internalServerError("Failed to create club facility");
       }
     },
   }),
