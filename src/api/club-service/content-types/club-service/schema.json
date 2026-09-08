@@ -27,6 +27,18 @@
     "isActive": {
       "type": "boolean",
       "default": true
+    },
+    "club_owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-owner.club-owner",
+      "inversedBy": "club_services"
+    },
+    "pending_club_owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pending-club-owner.pending-club-owner",
+      "inversedBy": "club_services"
     }
   }
 }

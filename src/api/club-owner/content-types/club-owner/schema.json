@@ -115,6 +115,18 @@
     },
     "read_by_admins": {
       "type": "json"
+    },
+    "club_services": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::club-service.club-service",
+      "mappedBy": "club_owner"
+    },
+    "club_facilities": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::club-facility.club-facility",
+      "mappedBy": "club_owner"
     }
   }
 }

@@ -1,6 +1,9 @@
 import { factories } from "@strapi/strapi";
 import { Context } from "koa";
-import { orderWeekdayScheduling } from "../../../utils/weekdayScheduling";
+import {
+  normalizeWeekdayScheduling,
+  orderWeekdayScheduling,
+} from "../../../utils/weekdayScheduling";
 
 const POPULATE: any = {
   user: true,
@@ -200,8 +203,16 @@ export default factories.createCoreController(
           return ctx.notFound("Club owner not found");
         }
 
+        const updateData = { ...data };
+
+        if (updateData.weekdayScheduling !== undefined) {
+          updateData.weekdayScheduling = orderWeekdayScheduling(
+            normalizeWeekdayScheduling(updateData.weekdayScheduling),
+          );
+        }
+
         await strapi.entityService.update("api::club-owner.club-owner", id, {
-          data,
+          data: updateData,
         });
 
         const entity: any = await strapi.entityService.findOne(
@@ -210,7 +221,22 @@ export default factories.createCoreController(
           { populate: POPULATE },
         );
 
-        ctx.body = entity;
+        if (entity && entity.weekdayScheduling) {
+          entity.weekdayScheduling = orderWeekdayScheduling(
+            entity.weekdayScheduling,
+          );
+        }
+
+        const updatedFields: any = {};
+        for (const key of Object.keys(data)) {
+          if (entity && key in entity) {
+            updatedFields[key] = entity[key];
+          } else if (key in updateData) {
+            updatedFields[key] = updateData[key];
+          }
+        }
+
+        ctx.body = updatedFields;
       } catch (err) {
         strapi.log.error("UPDATE CLUB OWNER ERROR:", err);
         return ctx.internalServerError("Failed to update club owner");

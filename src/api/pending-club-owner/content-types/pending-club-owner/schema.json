@@ -93,6 +93,18 @@
         "Premium",
         "Luxury"
       ]
+    },
+    "club_services": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::club-service.club-service",
+      "mappedBy": "pending_club_owner"
+    },
+    "club_facilities": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::club-facility.club-facility",
+      "mappedBy": "pending_club_owner"
     }
   }
 }
