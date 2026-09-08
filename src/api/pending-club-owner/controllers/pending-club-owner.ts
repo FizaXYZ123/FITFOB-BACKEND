@@ -7,6 +7,10 @@ import {
   orderWeekdayScheduling,
 } from "../../../utils/weekdayScheduling";
 import { validateOwnerGovernmentDocument } from "../../../services/aws-owner-document-validator";
+import {
+  resolveClubServiceIds,
+  resolveClubFacilityIds,
+} from "../../../utils/resolveClubRelations";
 const PENDING_UID = "api::pending-club-owner.pending-club-owner";
 const GOV_DOC_UID = "api::club-owner-document.club-owner-document";
 const CLUB_UID = "api::club-owner.club-owner";
@@ -175,6 +179,17 @@ export async function createClubOwnerFromPending(userId: number) {
   );
   const newClubId = await generateClubId();
 
+  const serviceIds = await resolveClubServiceIds(
+    draft.club_services && draft.club_services.length > 0
+      ? draft.club_services
+      : draft.services,
+  );
+  const facilityIds = await resolveClubFacilityIds(
+    draft.club_facilities && draft.club_facilities.length > 0
+      ? draft.club_facilities
+      : draft.facilities,
+  );
+
   const clubOwner = await strapi.entityService.create(CLUB_UID, {
     data: {
       user: userId,
@@ -187,6 +202,8 @@ export async function createClubOwnerFromPending(userId: number) {
       clubCategory: draft.clubCategory,
       facilities: draft.facilities,
       services: draft.services,
+      club_services: (serviceIds.length > 0 ? serviceIds : undefined) as any,
+      club_facilities: (facilityIds.length > 0 ? facilityIds : undefined) as any,
       latitude: draft.latitude,
       longitude: draft.longitude,
       clubAddress: draft.clubAddress,
@@ -350,14 +367,38 @@ export default {
     if (!allowedCategories.includes(body.clubCategory))
       return ctx.badRequest("Invalid club category");
 
+    const serviceIds = await resolveClubServiceIds(
+      body.club_services || body.services,
+    );
+    const facilityIds = await resolveClubFacilityIds(
+      body.club_facilities || body.facilities,
+    );
+
+    const updateData: any = {
+      services: body.services,
+      facilities: body.facilities,
+      weekdayScheduling: normalizeWeekdayScheduling(body.weekdayScheduling),
+      clubCategory: body.clubCategory,
+      currentStep: Math.max(draft.currentStep || 1, 5),
+    };
+
+    if (
+      serviceIds.length > 0 ||
+      Array.isArray(body.services) ||
+      Array.isArray(body.club_services)
+    ) {
+      updateData.club_services = serviceIds;
+    }
+    if (
+      facilityIds.length > 0 ||
+      Array.isArray(body.facilities) ||
+      Array.isArray(body.club_facilities)
+    ) {
+      updateData.club_facilities = facilityIds;
+    }
+
     await strapi.entityService.update(PENDING_UID, draft.id, {
-      data: {
-        services: body.services,
-        facilities: body.facilities,
-        weekdayScheduling: normalizeWeekdayScheduling(body.weekdayScheduling),
-        clubCategory: body.clubCategory,
-        currentStep: Math.max(draft.currentStep || 1, 5),
-      },
+      data: updateData,
     });
 
     ctx.send({ nextStep: 5 });
@@ -637,6 +678,12 @@ export default {
               populate: ["File"],
             },
             clubPhotos: true,
+            club_services: {
+              populate: ["logo"],
+            },
+            club_facilities: {
+              populate: ["logo"],
+            },
           },
         },
       );
@@ -683,10 +730,42 @@ export default {
         return ctx.notFound("Pending club owner not found");
       }
 
+      const updateData = { ...data };
+
+      if (updateData.weekdayScheduling !== undefined) {
+        updateData.weekdayScheduling = orderWeekdayScheduling(
+          normalizeWeekdayScheduling(updateData.weekdayScheduling),
+        );
+      }
+
+      if (
+        updateData.services !== undefined ||
+        updateData.club_services !== undefined
+      ) {
+        const serviceIds = await resolveClubServiceIds(
+          updateData.club_services !== undefined
+            ? updateData.club_services
+            : updateData.services,
+        );
+        updateData.club_services = serviceIds;
+      }
+
+      if (
+        updateData.facilities !== undefined ||
+        updateData.club_facilities !== undefined
+      ) {
+        const facilityIds = await resolveClubFacilityIds(
+          updateData.club_facilities !== undefined
+            ? updateData.club_facilities
+            : updateData.facilities,
+        );
+        updateData.club_facilities = facilityIds;
+      }
+
       await strapi.entityService.update(
         "api::pending-club-owner.pending-club-owner",
         id,
-        { data },
+        { data: updateData },
       );
 
       const entity: any = await strapi.entityService.findOne(
@@ -700,6 +779,12 @@ export default {
               populate: ["File"],
             },
             clubPhotos: true,
+            club_services: {
+              populate: ["logo"],
+            },
+            club_facilities: {
+              populate: ["logo"],
+            },
           },
         },
       );

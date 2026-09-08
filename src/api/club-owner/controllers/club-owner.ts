@@ -4,6 +4,10 @@ import {
   normalizeWeekdayScheduling,
   orderWeekdayScheduling,
 } from "../../../utils/weekdayScheduling";
+import {
+  resolveClubServiceIds,
+  resolveClubFacilityIds,
+} from "../../../utils/resolveClubRelations";
 
 const POPULATE: any = {
   user: true,
@@ -11,6 +15,12 @@ const POPULATE: any = {
   clubPhotos: true,
   club_owner_documents: {
     populate: ["File"],
+  },
+  club_services: {
+    populate: ["logo"],
+  },
+  club_facilities: {
+    populate: ["logo"],
   },
 };
 
@@ -209,6 +219,30 @@ export default factories.createCoreController(
           updateData.weekdayScheduling = orderWeekdayScheduling(
             normalizeWeekdayScheduling(updateData.weekdayScheduling),
           );
+        }
+
+        if (
+          updateData.services !== undefined ||
+          updateData.club_services !== undefined
+        ) {
+          const serviceIds = await resolveClubServiceIds(
+            updateData.club_services !== undefined
+              ? updateData.club_services
+              : updateData.services,
+          );
+          updateData.club_services = serviceIds;
+        }
+
+        if (
+          updateData.facilities !== undefined ||
+          updateData.club_facilities !== undefined
+        ) {
+          const facilityIds = await resolveClubFacilityIds(
+            updateData.club_facilities !== undefined
+              ? updateData.club_facilities
+              : updateData.facilities,
+          );
+          updateData.club_facilities = facilityIds;
         }
 
         await strapi.entityService.update("api::club-owner.club-owner", id, {
