@@ -55,6 +55,12 @@ export default {
     /* STEP 5 — CLUB OWNER GOVERNMENT ID'S */
     {
       method: "POST",
+      path: "/pending-club-owner/verify-government-doc",
+      handler: "pending-club-owner.verifyGovernmentDoc",
+      config: { auth: {} },
+    },
+    {
+      method: "POST",
       path: "/pending-club-owner/upload-government-doc",
       handler: "pending-club-owner.uploadGovernmentDoc",
       config: { auth: {} },

@@ -1,11 +1,65 @@
 import { Context } from "koa";
+import fs from "fs";
+import sharp from "sharp";
 import { generateClubId } from "../../../utils/generateClubId";
-import { normalizeWeekdayScheduling, orderWeekdayScheduling } from "../../../utils/weekdayScheduling";
+import {
+  normalizeWeekdayScheduling,
+  orderWeekdayScheduling,
+} from "../../../utils/weekdayScheduling";
+import { validateOwnerGovernmentDocument } from "../../../services/aws-owner-document-validator";
 const PENDING_UID = "api::pending-club-owner.pending-club-owner";
 const GOV_DOC_UID = "api::club-owner-document.club-owner-document";
 const CLUB_UID = "api::club-owner.club-owner";
 
 const UPLOAD_FOLDER_ID = 2;
+
+/* ---------- OPTIMIZE IMAGE & UPDATE TEMP FILE ---------- */
+async function prepareAndOptimizeImage(
+  rawFile: any,
+  maxWidth = 1600,
+  quality = 85,
+): Promise<Buffer> {
+  const filePath = rawFile.filepath || rawFile.path;
+  if (!filePath) {
+    throw new Error("Temporary file path not found");
+  }
+
+  const originalBuffer = await fs.promises.readFile(filePath);
+
+  // If PDF, return original buffer directly (sharp is only for raster images)
+  const isPdf =
+    rawFile.mimetype === "application/pdf" ||
+    (rawFile.originalFilename &&
+      rawFile.originalFilename.toLowerCase().endsWith(".pdf")) ||
+    originalBuffer.subarray(0, 4).toString() === "%PDF";
+
+  if (isPdf) {
+    return originalBuffer;
+  }
+
+  try {
+    const optimizedBuffer = await sharp(originalBuffer)
+      .rotate() // auto-orient based on EXIF
+      .resize({
+        width: maxWidth,
+        height: maxWidth,
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .jpeg({ quality, mozjpeg: true })
+      .toBuffer();
+
+    // Overwrite temp file so Strapi uploads the lightweight optimized image
+    await fs.promises.writeFile(filePath, optimizedBuffer);
+    rawFile.size = optimizedBuffer.length;
+    rawFile.mimetype = "image/jpeg";
+
+    return optimizedBuffer;
+  } catch (err) {
+    strapi.log.warn("Image optimization fallback to original buffer:", err);
+    return originalBuffer;
+  }
+}
 
 /* ---------------- BODY PARSER ---------------- */
 function getBody(ctx: Context) {
@@ -116,9 +170,9 @@ export async function createClubOwnerFromPending(userId: number) {
   const logoId = draft.logo?.id ?? null;
   const photoIds = draft.clubPhotos?.map((p: any) => p.id) ?? [];
   const docIds = (myDocs || []).map((d: any) => d.id);
-const weekdayScheduling = orderWeekdayScheduling(
-  normalizeWeekdayScheduling(draft.weekdayScheduling)
-);
+  const weekdayScheduling = orderWeekdayScheduling(
+    normalizeWeekdayScheduling(draft.weekdayScheduling),
+  );
   const newClubId = await generateClubId();
 
   const clubOwner = await strapi.entityService.create(CLUB_UID, {
@@ -129,7 +183,7 @@ const weekdayScheduling = orderWeekdayScheduling(
       phoneNumber: draft.phoneNumber,
       email: draft.email,
       clubName: draft.clubName,
-weekdayScheduling,
+      weekdayScheduling,
       clubCategory: draft.clubCategory,
       facilities: draft.facilities,
       services: draft.services,
@@ -307,6 +361,43 @@ export default {
     });
 
     ctx.send({ nextStep: 5 });
+  },
+
+  /* ===================================================== */
+  /* STEP 5A — VERIFY GOVERNMENT DOCUMENT AUTHENTICITY */
+  async verifyGovernmentDoc(ctx: Context) {
+    const draft: any = await getEditableDraft(ctx);
+    if (!draft) return;
+
+    const files: any = ctx.request.files;
+    const rawFile = files?.file || files?.governmentDoc || files?.governmentId;
+
+    if (!rawFile) {
+      return ctx.badRequest("Please upload a government document to verify");
+    }
+
+    const targetFile = Array.isArray(rawFile) ? rawFile[0] : rawFile;
+
+    try {
+      const buffer = await prepareAndOptimizeImage(targetFile, 1600, 85);
+      const documentResult = await validateOwnerGovernmentDocument(buffer);
+
+      if (!documentResult.valid) {
+        return ctx.badRequest(
+          "Please upload a valid document (Aadhaar, PAN, Voter ID, Driving License, Passport, GST Certificate, Bank Statement/Cheque, or Udyam/MSME Registration Certificate).",
+        );
+      }
+
+      return ctx.send({
+        valid: true,
+        documentType: documentResult.documentType,
+        displayName: documentResult.displayName,
+        message: "Government document verified successfully.",
+      });
+    } catch (error) {
+      strapi.log.error("Government document verification error:", error);
+      return ctx.internalServerError("Unable to validate government document.");
+    }
   },
 
   /* ===================================================== */
