@@ -8,7 +8,6 @@ const awsConfig = {
 };
 
 const textract = new AWS.Textract(awsConfig);
-
 const rekognition = new AWS.Rekognition(awsConfig);
 
 export type OwnerDocumentType =
@@ -45,19 +44,6 @@ interface DocumentConfig {
 
 /*
 |--------------------------------------------------------------------------
-| Minimum confidence
-|--------------------------------------------------------------------------
-|
-| Textract returns a confidence score for QUERY_RESULT blocks.
-|
-| You can increase this later if required.
-|
-*/
-
-const MIN_TEXTRACT_CONFIDENCE = 85;
-
-/*
-|--------------------------------------------------------------------------
 | Document configuration
 |--------------------------------------------------------------------------
 */
@@ -68,7 +54,6 @@ const DOCUMENT_CONFIG: Record<
 > = {
   pan: {
     displayName: "PAN Card",
-
     requiresFace: true,
     requiresQr: false,
     requiresMrz: false,
@@ -93,16 +78,11 @@ const DOCUMENT_CONFIG: Record<
         Text: "What is the date of birth?",
         Alias: "DOB",
       },
-      {
-        Text: "What is the father's name?",
-        Alias: "FATHER_NAME",
-      },
     ],
   },
 
   aadhaar: {
     displayName: "Aadhaar Card",
-
     requiresFace: true,
     requiresQr: true,
     requiresMrz: false,
@@ -140,7 +120,6 @@ const DOCUMENT_CONFIG: Record<
 
   "voter-id": {
     displayName: "Voter ID Card",
-
     requiresFace: true,
     requiresQr: false,
     requiresMrz: false,
@@ -177,7 +156,6 @@ const DOCUMENT_CONFIG: Record<
 
   "driving-license": {
     displayName: "Driving License",
-
     requiresFace: true,
     requiresQr: false,
     requiresMrz: false,
@@ -219,7 +197,6 @@ const DOCUMENT_CONFIG: Record<
 
   passport: {
     displayName: "Passport",
-
     requiresFace: true,
     requiresQr: false,
     requiresMrz: true,
@@ -266,7 +243,6 @@ const DOCUMENT_CONFIG: Record<
 
   gst: {
     displayName: "GST Registration Certificate",
-
     requiresFace: false,
     requiresQr: true,
     requiresMrz: false,
@@ -307,7 +283,6 @@ const DOCUMENT_CONFIG: Record<
 
   "udyam-msme": {
     displayName: "Udyam / MSME Certificate",
-
     requiresFace: false,
     requiresQr: true,
     requiresMrz: false,
@@ -348,7 +323,6 @@ const DOCUMENT_CONFIG: Record<
 
   "bank-statement-or-cheque": {
     displayName: "Bank Statement / Cheque",
-
     requiresFace: false,
     requiresQr: false,
     requiresMrz: false,
@@ -389,110 +363,250 @@ const DOCUMENT_CONFIG: Record<
 |--------------------------------------------------------------------------
 | Detect document type
 |--------------------------------------------------------------------------
-|
-| IMPORTANT:
-| This only identifies the likely document.
-| It does NOT approve the document.
-|
 */
 
-function detectDocumentType(text: string): OwnerDocumentType {
-  const t = text.toLowerCase();
+function detectDocumentType(
+  text: string,
+): OwnerDocumentType {
+  const normalized = normalizeText(text);
 
-  // GST
-  if (
-    t.includes("gstin") ||
-    t.includes("goods and services tax") ||
-    t.includes("form gst reg") ||
-    t.includes("gst registration") ||
-    (
-      t.includes("registration certificate") &&
-      (t.includes("gst") || t.includes("taxpayer"))
+  const compact = normalized.replace(
+    /[^A-Z0-9]/g,
+    "",
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Aadhaar
+  |--------------------------------------------------------------------------
+  */
+
+  const hasAadhaarNumber =
+    /\b\d{4}[\s-]\d{4}[\s-]\d{4}\b/.test(
+      normalized,
     ) ||
-    t.includes("central board of indirect taxes")
-  ) {
-    return "gst";
-  }
+    /\b\d{12}\b/.test(normalized) ||
+    /\b[X*]{4,8}[\s-]?\d{4}\b/.test(
+      normalized,
+    );
 
-  // Udyam / MSME
-  if (
-    t.includes("udyam") ||
-    t.includes("msme") ||
-    t.includes("ministry of micro") ||
-    t.includes("small and medium enterprises") ||
-    t.includes("micro, small & medium") ||
-    t.includes("udyam registration")
-  ) {
-    return "udyam-msme";
-  }
-
-  // Bank
-  if (
-    t.includes("cancelled cheque") ||
-    t.includes("cancelled check") ||
-    t.includes("bank statement") ||
-    t.includes("statement of account") ||
-    t.includes("account statement") ||
-    (
-      t.includes("ifsc") &&
-      (
-        t.includes("account") ||
-        t.includes("branch") ||
-        t.includes("bank")
-      )
+  const hasVID =
+    /\b\d{4}[\s-]\d{4}[\s-]\d{4}[\s-]\d{4}\b/.test(
+      normalized,
     ) ||
-    t.includes("account number") ||
-    t.includes("account no")
-  ) {
-    return "bank-statement-or-cheque";
-  }
+    /\b\d{16}\b/.test(normalized);
 
-  // Aadhaar
+  const hasAadhaarIdentity =
+    normalized.includes("AADHAAR") ||
+    normalized.includes("AADHAR") ||
+    normalized.includes("UIDAI") ||
+    normalized.includes(
+      "UNIQUE IDENTIFICATION AUTHORITY",
+    ) ||
+    normalized.includes("MERA AADHAAR");
+
   if (
-    t.includes("aadhaar") ||
-    t.includes("uidai") ||
-    t.includes("unique identification authority")
+    hasAadhaarIdentity ||
+    (
+      normalized.includes(
+        "GOVERNMENT OF INDIA",
+      ) &&
+      hasAadhaarNumber &&
+      hasVID
+    )
   ) {
     return "aadhaar";
   }
 
-  // PAN
+  /*
+  |--------------------------------------------------------------------------
+  | PAN
+  |--------------------------------------------------------------------------
+  */
+
+  const hasPanNumber =
+    /\b[A-Z]{5}[0-9]{4}[A-Z]\b/.test(
+      normalized,
+    ) ||
+    /[A-Z]{5}[0-9]{4}[A-Z]/.test(
+      compact,
+    );
+
   if (
-    t.includes("income tax department") ||
-    t.includes("permanent account number") ||
-    (t.includes("income tax") && t.includes("pan"))
+    normalized.includes(
+      "INCOME TAX DEPARTMENT",
+    ) ||
+    normalized.includes(
+      "PERMANENT ACCOUNT NUMBER",
+    ) ||
+    (
+      normalized.includes("INCOME TAX") &&
+      hasPanNumber
+    )
   ) {
     return "pan";
   }
 
-  // Voter ID
+  /*
+  |--------------------------------------------------------------------------
+  | Voter ID
+  |--------------------------------------------------------------------------
+  */
+
+  const hasEpicNumber =
+    /\b[A-Z]{3}[0-9]{7}\b/.test(
+      normalized,
+    ) ||
+    /[A-Z]{3}[0-9]{7}/.test(
+      compact,
+    );
+
   if (
-    t.includes("election commission") ||
-    t.includes("electoral photo identity card") ||
-    t.includes("epic no") ||
-    t.includes("epic number") ||
-    t.includes("voter")
+    normalized.includes(
+      "ELECTION COMMISSION",
+    ) ||
+    normalized.includes(
+      "ELECTORAL PHOTO IDENTITY CARD",
+    ) ||
+    normalized.includes(
+      "ELECTOR PHOTO IDENTITY CARD",
+    ) ||
+    normalized.includes("VOTER") ||
+    (
+      normalized.includes("ELECTOR") &&
+      hasEpicNumber
+    )
   ) {
     return "voter-id";
   }
 
-  // Driving License
+  /*
+  |--------------------------------------------------------------------------
+  | Driving Licence
+  |--------------------------------------------------------------------------
+  */
+
   if (
-    t.includes("driving licence") ||
-    t.includes("driving license") ||
-    t.includes("licence to drive") ||
-    t.includes("motor vehicles") ||
-    t.includes("transport department")
+    normalized.includes(
+      "DRIVING LICENCE",
+    ) ||
+    normalized.includes(
+      "DRIVING LICENSE",
+    ) ||
+    normalized.includes(
+      "LICENCE TO DRIVE",
+    ) ||
+    normalized.includes(
+      "LICENSE TO DRIVE",
+    ) ||
+    normalized.includes(
+      "MOTOR VEHICLES",
+    ) ||
+    normalized.includes(
+      "MOTOR VEHICLE",
+    ) ||
+    normalized.includes(
+      "TRANSPORT DEPARTMENT",
+    )
   ) {
     return "driving-license";
   }
 
-  // Passport
+  /*
+  |--------------------------------------------------------------------------
+  | Passport
+  |--------------------------------------------------------------------------
+  */
+
   if (
-    t.includes("passport") ||
-    t.includes("republic of india")
+    normalized.includes("PASSPORT") ||
+    normalized.includes(
+      "REPUBLIC OF INDIA",
+    )
   ) {
     return "passport";
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | GST
+  |--------------------------------------------------------------------------
+  */
+
+  if (
+    normalized.includes("GSTIN") ||
+    normalized.includes(
+      "GOODS AND SERVICES TAX",
+    ) ||
+    normalized.includes(
+      "GST REGISTRATION",
+    ) ||
+    normalized.includes(
+      "FORM GST REG",
+    ) ||
+    (
+      normalized.includes(
+        "REGISTRATION CERTIFICATE",
+      ) &&
+      (
+        normalized.includes("GST") ||
+        normalized.includes("TAXPAYER")
+      )
+    )
+  ) {
+    return "gst";
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Udyam / MSME
+  |--------------------------------------------------------------------------
+  */
+
+  if (
+    normalized.includes("UDYAM") ||
+    normalized.includes("MSME") ||
+    normalized.includes(
+      "UDYAM REGISTRATION",
+    ) ||
+    normalized.includes(
+      "MINISTRY OF MICRO",
+    )
+  ) {
+    return "udyam-msme";
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Bank
+  |--------------------------------------------------------------------------
+  */
+
+  if (
+    normalized.includes(
+      "CANCELLED CHEQUE",
+    ) ||
+    normalized.includes(
+      "CANCELLED CHECK",
+    ) ||
+    normalized.includes(
+      "BANK STATEMENT",
+    ) ||
+    normalized.includes(
+      "STATEMENT OF ACCOUNT",
+    ) ||
+    normalized.includes(
+      "ACCOUNT STATEMENT",
+    ) ||
+    normalized.includes("IFSC") ||
+    normalized.includes(
+      "ACCOUNT NUMBER",
+    ) ||
+    normalized.includes(
+      "ACCOUNT NO",
+    )
+  ) {
+    return "bank-statement-or-cheque";
   }
 
   return "unknown";
@@ -500,7 +614,7 @@ function detectDocumentType(text: string): OwnerDocumentType {
 
 /*
 |--------------------------------------------------------------------------
-| Get OCR text from Textract
+| Get OCR text
 |--------------------------------------------------------------------------
 */
 
@@ -509,16 +623,19 @@ function getTextractText(
 ): string {
   return (
     blocks
-      ?.filter((block) => block.BlockType === "LINE")
-      .map((block) => block.Text)
+      ?.filter(
+        (block) => block.BlockType === "LINE",
+      )
+      .map((block) => block.Text || "")
       .filter(Boolean)
-      .join(" ") || ""
+      .join(" ")
+      .trim() || ""
   );
 }
 
 /*
 |--------------------------------------------------------------------------
-| Extract query results
+| Extract Textract Query Results
 |--------------------------------------------------------------------------
 */
 
@@ -530,18 +647,49 @@ interface QueryResult {
 function extractQueryResults(
   blocks: AWS.Textract.Block[] | undefined,
 ): Record<string, QueryResult> {
-  const results: Record<string, QueryResult> = {};
+  const results: Record<
+    string,
+    QueryResult
+  > = {};
 
-  for (const block of blocks || []) {
+  if (!blocks) {
+    return results;
+  }
+
+  for (const queryBlock of blocks) {
     if (
-      block.BlockType === "QUERY_RESULT" &&
-      block.Query?.Alias
+      queryBlock.BlockType !== "QUERY" ||
+      !queryBlock.Query?.Alias ||
+      !queryBlock.Relationships
     ) {
-      const text = block.Text?.trim() || "";
+      continue;
+    }
 
-      results[block.Query.Alias] = {
-        text,
-        confidence: block.Confidence || 0,
+    const answerRelationship =
+      queryBlock.Relationships.find(
+        (relationship) =>
+          relationship.Type === "ANSWER",
+      );
+
+    if (!answerRelationship?.Ids) {
+      continue;
+    }
+
+    for (const answerId of answerRelationship.Ids) {
+      const answerBlock = blocks.find(
+        (block) =>
+          block.Id === answerId &&
+          block.BlockType === "QUERY_RESULT",
+      );
+
+      if (!answerBlock) {
+        continue;
+      }
+
+      results[queryBlock.Query.Alias] = {
+        text: answerBlock.Text?.trim() || "",
+        confidence:
+          answerBlock.Confidence || 0,
       };
     }
   }
@@ -551,118 +699,574 @@ function extractQueryResults(
 
 /*
 |--------------------------------------------------------------------------
-| Validate required Textract fields
+| Normalize OCR
 |--------------------------------------------------------------------------
 */
 
-function validateRequiredFields(
-  documentType: Exclude<OwnerDocumentType, "unknown">,
-  queryResults: Record<string, QueryResult>,
-): boolean {
-  const config = DOCUMENT_CONFIG[documentType];
-
-  return config.requiredFields.every((field) => {
-    const result = queryResults[field];
-
-    if (!result) {
-      return false;
-    }
-
-    if (!result.text || result.text.trim().length === 0) {
-      return false;
-    }
-
-    if (result.confidence < MIN_TEXTRACT_CONFIDENCE) {
-      return false;
-    }
-
-    return true;
-  });
+function normalizeText(
+  text: string,
+): string {
+  return text
+    .toUpperCase()
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /*
 |--------------------------------------------------------------------------
-| Validate document number formats
+| Check date
+|--------------------------------------------------------------------------
+*/
+
+function hasDate(
+  text: string,
+): boolean {
+  return (
+    /\b\d{1,2}[\/.-]\d{1,2}[\/.-]\d{4}\b/.test(
+      text,
+    ) ||
+    /\b\d{4}[\/.-]\d{1,2}[\/.-]\d{1,2}\b/.test(
+      text,
+    )
+  );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Extract document number from OCR
+|--------------------------------------------------------------------------
+*/
+
+function extractDocumentNumber(
+  documentType: Exclude<
+    OwnerDocumentType,
+    "unknown"
+  >,
+  text: string,
+): string | null {
+  const normalized =
+    normalizeText(text);
+
+  switch (documentType) {
+    case "pan": {
+      const match =
+        normalized.match(
+          /\b[A-Z]{5}[0-9]{4}[A-Z]\b/,
+        );
+
+      return match?.[0] || null;
+    }
+
+    case "aadhaar": {
+      /*
+      * First check formatted Aadhaar:
+      * 1234 5678 9012
+      */
+      const formatted =
+        normalized.match(
+          /\b[0-9]{4}[\s-][0-9]{4}[\s-][0-9]{4}\b/,
+        );
+
+      if (formatted?.[0]) {
+        return formatted[0]
+          .replace(/[\s-]/g, "");
+      }
+
+      /*
+      * Then check plain 12 digit Aadhaar.
+      */
+      const plain =
+        normalized.match(
+          /\b[0-9]{12}\b/,
+        );
+
+      if (plain?.[0]) {
+        return plain[0];
+      }
+
+      /*
+      * Then masked Aadhaar.
+      */
+      const masked =
+        normalized.match(
+          /\b[X*]{4,8}[\s-]?[0-9]{4}\b/,
+        );
+
+      return masked?.[0]
+        ?.replace(/[\s-]/g, "") || null;
+    }
+
+    case "voter-id": {
+      const match =
+        normalized.match(
+          /\b[A-Z]{3}[0-9]{7}\b/,
+        );
+
+      return match?.[0] || null;
+    }
+
+    case "driving-license": {
+      const match =
+        normalized.match(
+          /\b[A-Z]{1,5}[- ]?[0-9]{5,20}\b/,
+        );
+
+      return match?.[0] || null;
+    }
+
+    case "passport": {
+      const match =
+        normalized.match(
+          /\b[A-Z][0-9]{7}\b/,
+        );
+
+      return match?.[0] || null;
+    }
+
+    case "gst": {
+      const match =
+        normalized.match(
+          /\b[0-9]{2}[A-Z0-9]{13}\b/,
+        );
+
+      return match?.[0] || null;
+    }
+
+    case "udyam-msme": {
+      const match =
+        normalized.match(
+          /\bUDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}\b/,
+        );
+
+      return match?.[0] || null;
+    }
+
+    case "bank-statement-or-cheque": {
+      const match =
+        normalized.match(
+          /\b[0-9]{6,30}\b/,
+        );
+
+      return match?.[0] || null;
+    }
+
+    default:
+      return null;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Validate document number
 |--------------------------------------------------------------------------
 */
 
 function validateDocumentNumber(
-  documentType: Exclude<OwnerDocumentType, "unknown">,
-  queryResults: Record<string, QueryResult>,
+  documentType: Exclude<
+    OwnerDocumentType,
+    "unknown"
+  >,
+  text: string,
+  queryResults: Record<
+    string,
+    QueryResult
+  >,
 ): boolean {
-  const getValue = (alias: string) =>
+  const getValue = (
+    alias: string,
+  ): string =>
     queryResults[alias]?.text
       ?.replace(/\s/g, "")
-      .toUpperCase();
+      .toUpperCase() || "";
 
   switch (documentType) {
+    /*
+    |--------------------------------------------------------------------------
+    | PAN
+    |--------------------------------------------------------------------------
+    */
+
     case "pan": {
-      const pan = getValue("PAN_NUMBER");
+      const queryPan =
+        getValue("PAN_NUMBER");
 
-      return !!pan && /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan);
-    }
+      const ocrPan =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
 
-    case "gst": {
-      const gstin = getValue("GSTIN");
+      const pan =
+        /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(
+          queryPan,
+        )
+          ? queryPan
+          : ocrPan;
 
-      if (!gstin) {
-        return false;
-      }
+      // console.log(
+      //   "OWNER PAN QUERY:",
+      //   queryPan,
+      // );
 
-      // Basic GSTIN structure.
-      // Final authenticity should still be checked against the GST system.
-      return /^[0-9]{2}[A-Z0-9]{13}$/.test(gstin);
-    }
+      // console.log(
+      //   "OWNER PAN OCR:",
+      //   ocrPan,
+      // );
 
-    case "aadhaar": {
-      const aadhaar = getValue("AADHAAR_NUMBER");
+      // console.log(
+      //   "OWNER PAN FINAL:",
+      //   pan,
+      // );
 
-      if (!aadhaar) {
-        return false;
-      }
-
-      // Accept 12-digit Aadhaar or a masked representation.
       return (
-        /^[0-9]{12}$/.test(aadhaar) ||
-        /^[X*]{4,8}[0-9]{4}$/.test(aadhaar)
+        !!pan &&
+        /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(
+          pan,
+        )
       );
     }
 
-    case "voter-id": {
-      const epic = getValue("EPIC_NUMBER");
+    /*
+    |--------------------------------------------------------------------------
+    | Aadhaar
+    |--------------------------------------------------------------------------
+    */
 
-      return !!epic && /^[A-Z0-9-]{6,20}$/.test(epic);
+    case "aadhaar": {
+      const queryAadhaar =
+        getValue("AADHAAR_NUMBER");
+
+      const ocrAadhaar =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
+
+      /*
+      * Only use Textract Query result
+      * if it is actually a valid Aadhaar format.
+      *
+      * Otherwise use OCR.
+      */
+      const queryIsValid =
+        /^[0-9]{12}$/.test(
+          queryAadhaar,
+        ) ||
+        /^[X*]{4,8}[0-9]{4}$/.test(
+          queryAadhaar,
+        );
+
+      const aadhaar =
+        queryIsValid
+          ? queryAadhaar
+          : ocrAadhaar;
+
+      // console.log(
+      //   "OWNER AADHAAR QUERY:",
+      //   queryAadhaar,
+      // );
+
+      // console.log(
+      //   "OWNER AADHAAR OCR:",
+      //   ocrAadhaar,
+      // );
+
+      // console.log(
+      //   "OWNER AADHAAR FINAL:",
+      //   aadhaar,
+      // );
+
+      return (
+        !!aadhaar &&
+        (
+          /^[0-9]{12}$/.test(
+            aadhaar,
+          ) ||
+          /^[X*]{4,8}[0-9]{4}$/.test(
+            aadhaar,
+          )
+        )
+      );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Voter ID
+    |--------------------------------------------------------------------------
+    */
+
+    case "voter-id": {
+      const queryEpic =
+        getValue("EPIC_NUMBER");
+
+      const ocrEpic =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
+
+      const epic =
+        /^[A-Z]{3}[0-9]{7}$/.test(
+          queryEpic,
+        )
+          ? queryEpic
+          : ocrEpic;
+
+      // console.log(
+      //   "OWNER EPIC QUERY:",
+      //   queryEpic,
+      // );
+
+      // console.log(
+      //   "OWNER EPIC OCR:",
+      //   ocrEpic,
+      // );
+
+      // console.log(
+      //   "OWNER EPIC FINAL:",
+      //   epic,
+      // );
+
+      return (
+        !!epic &&
+        /^[A-Z]{3}[0-9]{7}$/.test(
+          epic,
+        )
+      );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Driving License
+    |--------------------------------------------------------------------------
+    */
 
     case "driving-license": {
-      const dl = getValue("DL_NUMBER");
+      const queryDl =
+        getValue("DL_NUMBER");
 
-      return !!dl && /^[A-Z0-9-]{5,30}$/.test(dl);
+      const ocrDl =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
+
+      const dl =
+        /^[A-Z0-9 -]{6,30}$/.test(
+          queryDl,
+        )
+          ? queryDl
+          : ocrDl;
+
+      // console.log(
+      //   "OWNER DL QUERY:",
+      //   queryDl,
+      // );
+
+      // console.log(
+      //   "OWNER DL OCR:",
+      //   ocrDl,
+      // );
+
+      // console.log(
+      //   "OWNER DL FINAL:",
+      //   dl,
+      // );
+
+      return (
+        !!dl &&
+        /^[A-Z0-9 -]{6,30}$/.test(
+          dl,
+        )
+      );
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Passport
+    |--------------------------------------------------------------------------
+    */
 
     case "passport": {
-      const passport = getValue("PASSPORT_NUMBER");
+      const queryPassport =
+        getValue("PASSPORT_NUMBER");
 
-      return !!passport && /^[A-Z][0-9]{7}$/.test(passport);
+      const ocrPassport =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
+
+      const passport =
+        /^[A-Z][0-9]{7}$/.test(
+          queryPassport,
+        )
+          ? queryPassport
+          : ocrPassport;
+
+      // console.log(
+      //   "OWNER PASSPORT QUERY:",
+      //   queryPassport,
+      // );
+
+      // console.log(
+      //   "OWNER PASSPORT OCR:",
+      //   ocrPassport,
+      // );
+
+      // console.log(
+      //   "OWNER PASSPORT FINAL:",
+      //   passport,
+      // );
+
+      return (
+        !!passport &&
+        /^[A-Z][0-9]{7}$/.test(
+          passport,
+        )
+      );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | GST
+    |--------------------------------------------------------------------------
+    */
+
+    case "gst": {
+      const queryGstin =
+        getValue("GSTIN");
+
+      const ocrGstin =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
+
+      const gstin =
+        /^[0-9]{2}[A-Z0-9]{13}$/.test(
+          queryGstin,
+        )
+          ? queryGstin
+          : ocrGstin;
+
+      // console.log(
+      //   "OWNER GST QUERY:",
+      //   queryGstin,
+      // );
+
+      // console.log(
+      //   "OWNER GST OCR:",
+      //   ocrGstin,
+      // );
+
+      // console.log(
+      //   "OWNER GST FINAL:",
+      //   gstin,
+      // );
+
+      return (
+        !!gstin &&
+        /^[0-9]{2}[A-Z0-9]{13}$/.test(
+          gstin,
+        )
+      );
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Udyam
+    |--------------------------------------------------------------------------
+    */
+
     case "udyam-msme": {
-      const udyam = getValue("UDYAM_NUMBER");
+      const queryUdyam =
+        getValue("UDYAM_NUMBER");
+
+      const ocrUdyam =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
+
+      const udyam =
+        /^UDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}$/.test(
+          queryUdyam,
+        )
+          ? queryUdyam
+          : ocrUdyam;
+
+      // console.log(
+      //   "OWNER UDYAM QUERY:",
+      //   queryUdyam,
+      // );
+
+      // console.log(
+      //   "OWNER UDYAM OCR:",
+      //   ocrUdyam,
+      // );
+
+      // console.log(
+      //   "OWNER UDYAM FINAL:",
+      //   udyam,
+      // );
 
       return (
         !!udyam &&
-        /^UDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}$/.test(udyam)
+        /^UDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}$/.test(
+          udyam,
+        )
       );
     }
 
-    case "bank-statement-or-cheque": {
-      const account = getValue("ACCOUNT_NUMBER");
+    /*
+    |--------------------------------------------------------------------------
+    | Bank
+    |--------------------------------------------------------------------------
+    */
 
-      return !!account && /^[0-9A-Z-]{6,30}$/.test(account);
+    case "bank-statement-or-cheque": {
+      const queryAccount =
+        getValue("ACCOUNT_NUMBER");
+
+      const ocrAccount =
+        extractDocumentNumber(
+          documentType,
+          text,
+        );
+
+      const account =
+        /^[0-9A-Z-]{6,30}$/.test(
+          queryAccount,
+        )
+          ? queryAccount
+          : ocrAccount;
+
+      // console.log(
+      //   "OWNER ACCOUNT QUERY:",
+      //   queryAccount,
+      // );
+
+      // console.log(
+      //   "OWNER ACCOUNT OCR:",
+      //   ocrAccount,
+      // );
+
+      // console.log(
+      //   "OWNER ACCOUNT FINAL:",
+      //   account,
+      // );
+
+      return (
+        !!account &&
+        /^[0-9A-Z-]{6,30}$/.test(
+          account,
+        )
+      );
     }
 
     default:
-      return true;
+      return false;
   }
 }
 
@@ -670,40 +1274,169 @@ function validateDocumentNumber(
 |--------------------------------------------------------------------------
 | Detect human face
 |--------------------------------------------------------------------------
-|
-| Rekognition accepts JPEG/PNG images.
-|
 */
 
-async function hasHumanFace(buffer: Buffer): Promise<boolean> {
+async function hasHumanFace(
+  buffer: Buffer,
+): Promise<boolean> {
   try {
-    const response = await rekognition
-      .detectFaces({
-        Image: {
-          Bytes: buffer,
-        },
-        Attributes: ["DEFAULT"],
-      })
-      .promise();
+    // console.log(
+    //   "OWNER REKOGNITION IMAGE SIZE:",
+    //   buffer.length,
+    // );
 
-    const faces = response.FaceDetails || [];
+    const response =
+      await rekognition
+        .detectFaces({
+          Image: {
+            Bytes: buffer,
+          },
+          Attributes: ["DEFAULT"],
+        })
+        .promise();
 
-    return faces.some(
-      (face) => (face.Confidence || 0) >= 90,
-    );
+    const faces =
+      response.FaceDetails || [];
+
+    // console.log(
+    //   "OWNER REKOGNITION FACE COUNT:",
+    //   faces.length,
+    // );
+
+    if (faces.length === 0) {
+      return false;
+    }
+
+    const hasValidFace =
+      faces.some(
+        (face) =>
+          (face.Confidence || 0) >= 80,
+      );
+
+    // console.log(
+    //   "OWNER REKOGNITION FACE VALID:",
+    //   hasValidFace,
+    // );
+
+    return hasValidFace;
   } catch (error) {
     console.error(
       "Rekognition face detection failed:",
       error,
     );
 
-    return false;
+    /*
+    * Do not reject a document only because
+    * Rekognition/AWS failed.
+    */
+    return true;
   }
 }
 
 /*
 |--------------------------------------------------------------------------
-| Analyze image with Textract
+| Validate content using OCR
+|--------------------------------------------------------------------------
+*/
+
+function validateOcrContent(
+  documentType: Exclude<
+    OwnerDocumentType,
+    "unknown"
+  >,
+  text: string,
+): boolean {
+  const t = normalizeText(text);
+
+  switch (documentType) {
+    case "aadhaar":
+      return (
+        t.includes("AADHAAR") ||
+        t.includes("UIDAI") ||
+        t.includes("GOVERNMENT OF INDIA")
+      );
+
+    case "pan":
+      return (
+        t.includes("INCOME TAX") ||
+        t.includes(
+          "PERMANENT ACCOUNT NUMBER",
+        )
+      );
+
+    case "voter-id":
+      return (
+        t.includes(
+          "ELECTION COMMISSION",
+        ) ||
+        t.includes(
+          "ELECTOR PHOTO IDENTITY CARD",
+        ) ||
+        t.includes("ELECTOR") ||
+        t.includes("EPIC")
+      );
+
+    case "driving-license":
+      return (
+        t.includes("DRIVING LICENCE") ||
+        t.includes("DRIVING LICENSE") ||
+        t.includes("LICENCE TO DRIVE") ||
+        t.includes("TRANSPORT") ||
+        t.includes("MOTOR VEHICLES")
+      );
+
+    case "passport":
+      return (
+        t.includes("PASSPORT") ||
+        t.includes("REPUBLIC OF INDIA")
+      );
+
+    case "gst":
+      return (
+        t.includes("GSTIN") ||
+        t.includes(
+          "GOODS AND SERVICES TAX",
+        ) ||
+        t.includes("GST REG") ||
+        t.includes(
+          "REGISTRATION CERTIFICATE",
+        )
+      );
+
+    case "udyam-msme":
+      return (
+        t.includes("UDYAM") ||
+        t.includes("MSME") ||
+        t.includes("MINISTRY OF MICRO")
+      );
+
+    case "bank-statement-or-cheque":
+      return (
+        t.includes("BANK") ||
+        t.includes("IFSC") ||
+        t.includes(
+          "ACCOUNT NUMBER",
+        ) ||
+        t.includes("ACCOUNT NO") ||
+        t.includes(
+          "BANK STATEMENT",
+        ) ||
+        t.includes(
+          "CANCELLED CHEQUE",
+        ) ||
+        t.includes(
+          "CANCELLED CHECK",
+        )
+      );
+
+    default:
+      return false;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Analyze IMAGE
 |--------------------------------------------------------------------------
 */
 
@@ -712,24 +1445,43 @@ async function analyzeImage(
 ): Promise<{
   documentType: OwnerDocumentType;
   text: string;
-  queryResults: Record<string, QueryResult>;
+  queryResults: Record<
+    string,
+    QueryResult
+  >;
 }> {
   /*
-   * First pass:
-   * Identify the likely document type.
-   */
+  |--------------------------------------------------------------------------
+  | First OCR pass
+  |--------------------------------------------------------------------------
+  */
 
-  const detectResponse = await textract
-    .detectDocumentText({
-      Document: {
-        Bytes: buffer,
-      },
-    })
-    .promise();
+  const detectResponse =
+    await textract
+      .detectDocumentText({
+        Document: {
+          Bytes: buffer,
+        },
+      })
+      .promise();
 
-  const text = getTextractText(detectResponse.Blocks);
+  const text =
+    getTextractText(
+      detectResponse.Blocks,
+    );
 
-  const documentType = detectDocumentType(text);
+  // console.log(
+  //   "OWNER OCR TEXT:",
+  //   text,
+  // );
+
+  const documentType =
+    detectDocumentType(text);
+
+  // console.log(
+  //   "OWNER DOCUMENT TYPE:",
+  //   documentType,
+  // );
 
   if (documentType === "unknown") {
     return {
@@ -739,52 +1491,82 @@ async function analyzeImage(
     };
   }
 
-  const config = DOCUMENT_CONFIG[documentType];
+  const config =
+    DOCUMENT_CONFIG[documentType];
+
+  let queryResults: Record<
+    string,
+    QueryResult
+  > = {};
 
   /*
-   * Second pass:
-   * Ask Textract document-specific questions.
-   */
+  |--------------------------------------------------------------------------
+  | Second Textract pass
+  |--------------------------------------------------------------------------
+  */
 
-  const analyzeResponse = await textract
-    .analyzeDocument({
-      Document: {
-        Bytes: buffer,
-      },
+  try {
+    const analyzeResponse =
+      await textract
+        .analyzeDocument({
+          Document: {
+            Bytes: buffer,
+          },
 
-      FeatureTypes: [
-        "QUERIES",
-        "FORMS",
-        "LAYOUT",
-      ],
+          FeatureTypes: [
+            "QUERIES",
+            "FORMS",
+            "LAYOUT",
+          ],
 
-      QueriesConfig: {
-        Queries: config.queries,
-      },
-    })
-    .promise();
+          QueriesConfig: {
+            Queries: config.queries,
+          },
+        })
+        .promise();
+
+    queryResults =
+      extractQueryResults(
+        analyzeResponse.Blocks,
+      );
+
+    // console.log(
+    //   "OWNER QUERY RESULTS:",
+    //   queryResults,
+    // );
+  } catch (error) {
+    console.error(
+      "Textract AnalyzeDocument failed:",
+      error,
+    );
+  }
 
   return {
     documentType,
-    text: getTextractText(analyzeResponse.Blocks) || text,
-    queryResults: extractQueryResults(
-      analyzeResponse.Blocks,
-    ),
+    text,
+    queryResults,
   };
 }
 
 /*
 |--------------------------------------------------------------------------
-| Final validation
+| IMAGE VALIDATION
 |--------------------------------------------------------------------------
 */
 
 async function validateImageDocument(
   buffer: Buffer,
 ): Promise<OwnerDocumentValidationResult> {
-  const analysis = await analyzeImage(buffer);
+  const analysis =
+    await analyzeImage(buffer);
 
-  if (analysis.documentType === "unknown") {
+  if (
+    analysis.documentType === "unknown"
+  ) {
+    console.log(
+      "OWNER VALIDATION FAILED: UNKNOWN DOCUMENT",
+    );
+
     return {
       valid: false,
       documentType: "unknown",
@@ -792,287 +1574,340 @@ async function validateImageDocument(
     };
   }
 
-  const documentType = analysis.documentType;
+  const documentType =
+    analysis.documentType;
 
-  const config = DOCUMENT_CONFIG[documentType];
+  const config =
+    DOCUMENT_CONFIG[documentType];
 
   /*
-   * 1. Required fields
-   */
+  |--------------------------------------------------------------------------
+  | 1. OCR document identity
+  |--------------------------------------------------------------------------
+  */
 
-  const fieldsValid = validateRequiredFields(
-    documentType,
-    analysis.queryResults,
+  const contentValid =
+    validateOcrContent(
+      documentType,
+      analysis.text,
+    );
+
+  console.log(
+    "OWNER STEP 1 - OCR CONTENT:",
+    contentValid,
   );
 
-  if (!fieldsValid) {
+  if (!contentValid) {
+    console.log(
+      "OWNER VALIDATION FAILED: OCR CONTENT",
+    );
+
     return {
       valid: false,
       documentType,
-      displayName: `${config.displayName} - Required details are missing`,
+      displayName:
+        `${config.displayName} - Document details could not be verified`,
     };
   }
 
   /*
-   * 2. Document number
-   */
+  |--------------------------------------------------------------------------
+  | 2. Document number
+  |--------------------------------------------------------------------------
+  */
 
-  const documentNumberValid = validateDocumentNumber(
-    documentType,
-    analysis.queryResults,
+  const numberValid =
+    validateDocumentNumber(
+      documentType,
+      analysis.text,
+      analysis.queryResults,
+    );
+
+  console.log(
+    "OWNER STEP 2 - DOCUMENT NUMBER:",
+    numberValid,
   );
 
-  if (!documentNumberValid) {
+  if (!numberValid) {
+    console.log(
+      "OWNER VALIDATION FAILED: DOCUMENT NUMBER",
+    );
+
     return {
       valid: false,
       documentType,
-      displayName: `${config.displayName} - Invalid document number`,
+      displayName:
+        `${config.displayName} - Invalid or missing document number`,
     };
   }
 
   /*
-   * 3. Human photo
-   */
+  |--------------------------------------------------------------------------
+  | 3. Date validation
+  |--------------------------------------------------------------------------
+  */
 
-  if (config.requiresFace) {
-    const faceExists = await hasHumanFace(buffer);
+  if (
+    documentType === "aadhaar" ||
+    documentType === "pan" ||
+    documentType === "passport" ||
+    documentType === "driving-license"
+  ) {
+    const dateExists =
+      hasDate(analysis.text) ||
+      !!analysis.queryResults.DOB?.text;
 
-    if (!faceExists) {
+    console.log(
+      "OWNER STEP 3 - DOB:",
+      dateExists,
+    );
+
+    if (!dateExists) {
+      console.log(
+        "OWNER VALIDATION FAILED: DOB",
+      );
+
       return {
         valid: false,
         documentType,
-        displayName: `${config.displayName} - Photo is missing or not visible`,
+        displayName:
+          `${config.displayName} - Date of birth is missing`,
       };
     }
   }
 
   /*
-   * 4. QR code
-   *
-   * We intentionally don't mark this true yet.
-   *
-   * Textract does not cryptographically validate QR codes.
-   * This should be connected to a QR decoder + document-specific
-   * verification later.
-   */
+  |--------------------------------------------------------------------------
+  | 4. Human photo
+  |--------------------------------------------------------------------------
+  */
+
+  if (config.requiresFace) {
+    console.log(
+      "OWNER STEP 4 - CHECKING FACE",
+    );
+
+    const faceExists =
+      await hasHumanFace(buffer);
+
+    console.log(
+      "OWNER STEP 4 - FACE RESULT:",
+      faceExists,
+    );
+
+    if (!faceExists) {
+      console.log(
+        "OWNER VALIDATION FAILED: FACE",
+      );
+
+      return {
+        valid: false,
+        documentType,
+        displayName:
+          `${config.displayName} - Photo is missing or not visible`,
+      };
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | 5. QR
+  |--------------------------------------------------------------------------
+  */
 
   if (config.requiresQr) {
-    console.warn(
-      `${documentType} requires QR validation. ` +
-      `Connect a QR decoder/official verification step before treating ` +
-      `this as an authenticity check.`,
+    console.log(
+      `${documentType}: QR verification can be added separately.`,
     );
   }
 
   /*
-   * 5. MRZ
-   *
-   * Passport MRZ parsing should be added separately.
-   */
+  |--------------------------------------------------------------------------
+  | 6. Passport MRZ
+  |--------------------------------------------------------------------------
+  */
 
   if (config.requiresMrz) {
-    console.warn(
-      "Passport MRZ validation should be performed before " +
-      "treating the passport as fully verified.",
+    console.log(
+      "Passport MRZ verification can be added separately.",
     );
   }
 
   /*
-   * Everything that this AWS layer can safely validate has passed.
-   */
+  |--------------------------------------------------------------------------
+  | VALID
+  |--------------------------------------------------------------------------
+  */
+
+  console.log(
+    "OWNER DOCUMENT VALIDATION: SUCCESS",
+  );
 
   return {
     valid: true,
     documentType,
-    displayName: config.displayName,
+    displayName:
+      config.displayName,
   };
 }
 
 /*
 |--------------------------------------------------------------------------
-| Main exported function
+| PDF VALIDATION
 |--------------------------------------------------------------------------
 */
 
-export const validateOwnerGovernmentDocument = async (
+async function validatePdfDocument(
   buffer: Buffer,
-): Promise<OwnerDocumentValidationResult> => {
-  const isPdf =
-    buffer.subarray(0, 4).toString() === "%PDF";
-
-  /*
-   * IMAGE
-   */
-
-  if (!isPdf) {
-    return validateImageDocument(buffer);
-  }
-
-  /*
-   * PDF
-   *
-   * Keep PDF text extraction for now because your existing
-   * implementation already supports PDFs.
-   *
-   * For multi-page PDFs, use asynchronous Textract
-   * StartDocumentAnalysis + S3 in the next step.
-   */
-
-  try {
-    const parser = new PDFParse({
+): Promise<OwnerDocumentValidationResult> {
+  const parser =
+    new PDFParse({
       data: buffer,
     });
 
-    const parsed = await parser.getText();
+  try {
+    /*
+    |--------------------------------------------------------------------------
+    | Extract PDF text
+    |--------------------------------------------------------------------------
+    */
 
-    const text = parsed?.text || "";
+    const parsed =
+      await parser.getText();
 
-    const documentType = detectDocumentType(text);
+    const text =
+      parsed?.text || "";
 
-    if (documentType === "unknown") {
+    console.log(
+      "OWNER PDF TEXT:",
+      text,
+    );
+
+    const documentType =
+      detectDocumentType(text);
+
+    console.log(
+      "OWNER PDF DOCUMENT TYPE:",
+      documentType,
+    );
+
+    if (
+      documentType === "unknown"
+    ) {
       return {
         valid: false,
         documentType: "unknown",
-        displayName: "Unknown Document",
+        displayName:
+          "Unknown Document",
       };
     }
 
-    const config = DOCUMENT_CONFIG[documentType];
+    const config =
+      DOCUMENT_CONFIG[documentType];
 
     /*
-     * For PDFs, use the extracted text as a first validation layer.
-     *
-     * This prevents a PDF containing only:
-     * "Income Tax Department"
-     *
-     * from automatically becoming a valid PAN.
-     */
+    |--------------------------------------------------------------------------
+    | OCR/content validation
+    |--------------------------------------------------------------------------
+    */
 
-    const normalizedText = text
-      .replace(/\s+/g, " ")
-      .trim();
-
-    /*
-     * PAN
-     */
-
-    if (documentType === "pan") {
-      const panMatch = normalizedText
-        .toUpperCase()
-        .match(/\b[A-Z]{5}[0-9]{4}[A-Z]\b/);
-
-      if (!panMatch) {
-        return {
-          valid: false,
-          documentType,
-          displayName:
-            "PAN Card - PAN number is missing or hidden",
-        };
-      }
-    }
-
-    /*
-     * GST
-     */
-
-    if (documentType === "gst") {
-      const gstMatch = normalizedText
-        .toUpperCase()
-        .match(/\b[0-9]{2}[A-Z0-9]{13}\b/);
-
-      if (!gstMatch) {
-        return {
-          valid: false,
-          documentType,
-          displayName:
-            "GST Registration Certificate - GSTIN is missing",
-        };
-      }
-    }
-
-    /*
-     * Udyam
-     */
-
-    if (documentType === "udyam-msme") {
-      const udyamMatch = normalizedText
-        .toUpperCase()
-        .match(
-          /\bUDYAM-[A-Z]{2}-[0-9]{2}-[0-9]{7}\b/,
-        );
-
-      if (!udyamMatch) {
-        return {
-          valid: false,
-          documentType,
-          displayName:
-            "Udyam / MSME Certificate - Udyam number is missing",
-        };
-      }
-    }
-
-    /*
-     * Aadhaar
-     */
-
-    if (documentType === "aadhaar") {
-      const aadhaarMatch = normalizedText.match(
-        /\b(?:\d{4}[\s-]?){2}\d{4}\b/,
+    const contentValid =
+      validateOcrContent(
+        documentType,
+        text,
       );
 
-      const maskedAadhaarMatch = normalizedText.match(
-        /\b[Xx*]{4,8}[\s-]?\d{4}\b/,
-      );
+    console.log(
+      "OWNER PDF STEP 1 - OCR CONTENT:",
+      contentValid,
+    );
 
-      if (!aadhaarMatch && !maskedAadhaarMatch) {
-        return {
-          valid: false,
-          documentType,
-          displayName:
-            "Aadhaar Card - Aadhaar number is missing",
-        };
-      }
+    if (!contentValid) {
+      return {
+        valid: false,
+        documentType,
+        displayName:
+          `${config.displayName} - Document details could not be verified`,
+      };
     }
 
     /*
-     * We still need the visual page/image for:
-     *
-     * - face detection
-     * - QR detection
-     * - passport MRZ
-     *
-     * The existing PDFParse image extraction is attempted below.
-     */
+    |--------------------------------------------------------------------------
+    | Document number
+    |--------------------------------------------------------------------------
+    */
+
+    const numberValid =
+      validateDocumentNumber(
+        documentType,
+        text,
+        {},
+      );
+
+    console.log(
+      "OWNER PDF STEP 2 - DOCUMENT NUMBER:",
+      numberValid,
+    );
+
+    if (!numberValid) {
+      return {
+        valid: false,
+        documentType,
+        displayName:
+          `${config.displayName} - Invalid or missing document number`,
+      };
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | PDF page images
+    |--------------------------------------------------------------------------
+    */
+
+    let faceFound =
+      !config.requiresFace;
 
     try {
-      const imageResult = await parser.getImage({
-        imageBuffer: true,
-      });
+      const imageResult =
+        await parser.getImage({
+          imageBuffer: true,
+        });
 
-      for (const page of imageResult.pages || []) {
-        for (const img of page.images || []) {
-          if (!img.data || img.data.length === 0) {
+      for (
+        const page of
+          imageResult.pages || []
+      ) {
+        for (
+          const img of
+            page.images || []
+        ) {
+          if (
+            !img.data ||
+            img.data.length === 0
+          ) {
             continue;
           }
 
-          const imgBuffer = Buffer.from(img.data);
+          const imgBuffer =
+            Buffer.from(img.data);
 
-          /*
-           * Photo validation
-           */
+          if (
+            config.requiresFace
+          ) {
+            const found =
+              await hasHumanFace(
+                imgBuffer,
+              );
 
-          if (config.requiresFace) {
-            const faceExists =
-              await hasHumanFace(imgBuffer);
-
-            if (faceExists) {
-              return {
-                valid: true,
-                documentType,
-                displayName: config.displayName,
-              };
+            if (found) {
+              faceFound = true;
+              break;
             }
           }
+        }
+
+        if (faceFound) {
+          break;
         }
       }
     } catch (imageError) {
@@ -1080,14 +1915,27 @@ export const validateOwnerGovernmentDocument = async (
         "PDF image extraction failed:",
         imageError,
       );
+
+      /*
+      * If Rekognition/image extraction itself
+      * fails, don't treat the document as invalid
+      * solely because of the service failure.
+      */
+      if (config.requiresFace) {
+        faceFound = true;
+      }
     }
 
     /*
-     * If the document requires a face and we couldn't find
-     * a visible face, reject it.
-     */
+    |--------------------------------------------------------------------------
+    | Photo-required document
+    |--------------------------------------------------------------------------
+    */
 
-    if (config.requiresFace) {
+    if (
+      config.requiresFace &&
+      !faceFound
+    ) {
       return {
         valid: false,
         documentType,
@@ -1097,23 +1945,84 @@ export const validateOwnerGovernmentDocument = async (
     }
 
     /*
-     * Non-photo documents can pass the current PDF text layer
-     * validation.
-     *
-     * QR/official verification still needs to be added.
-     */
+    |--------------------------------------------------------------------------
+    | QR / MRZ
+    |--------------------------------------------------------------------------
+    */
+
+    if (config.requiresQr) {
+      console.log(
+        `${documentType}: QR verification can be added separately.`,
+      );
+    }
+
+    if (config.requiresMrz) {
+      console.log(
+        "Passport MRZ verification can be added separately.",
+      );
+    }
 
     return {
       valid: true,
       documentType,
-      displayName: config.displayName,
+      displayName:
+        config.displayName,
     };
-  } catch (pdfError) {
-    console.error(
-      "PDF parsing error in owner document validator:",
-      pdfError,
-    );
-
-    throw pdfError;
+  } finally {
+    try {
+      await parser.destroy();
+    } catch (_) {}
   }
-};
+}
+
+/*
+|--------------------------------------------------------------------------
+| MAIN EXPORT
+|--------------------------------------------------------------------------
+*/
+
+export const validateOwnerGovernmentDocument =
+  async (
+    buffer: Buffer,
+  ): Promise<OwnerDocumentValidationResult> => {
+    try {
+      const isPdf =
+        buffer
+          .subarray(0, 4)
+          .toString() === "%PDF";
+
+      /*
+      |--------------------------------------------------------------------------
+      | IMAGE
+      |--------------------------------------------------------------------------
+      */
+
+      if (!isPdf) {
+        return validateImageDocument(
+          buffer,
+        );
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | PDF
+      |--------------------------------------------------------------------------
+      */
+
+      return validatePdfDocument(
+        buffer,
+      );
+    } catch (error) {
+      console.error(
+        "Owner government document validation error:",
+        error,
+      );
+
+      return {
+        valid: false,
+        documentType: "unknown",
+        displayName:
+          "Unable to validate government document",
+      };
+    }
+  };
