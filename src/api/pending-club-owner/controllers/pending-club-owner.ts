@@ -13,6 +13,7 @@ import {
 } from "../../../utils/resolveClubRelations";
 const PENDING_UID = "api::pending-club-owner.pending-club-owner";
 const GOV_DOC_UID = "api::club-owner-document.club-owner-document";
+const CLUB_PHOTO_UID = "api::club-photo.club-photo";
 const CLUB_UID = "api::club-owner.club-owner";
 
 const UPLOAD_FOLDER_ID = 2;
@@ -133,6 +134,13 @@ async function validateBeforeSubmission(draft: any) {
   if (!docs || docs.length === 0)
     return "Please upload at least one government document";
 
+  const photos = await strapi.entityService.findMany(CLUB_PHOTO_UID, {
+    filters: { pending_club_owner: { id: draft.id } },
+  });
+
+  if (!photos || photos.length === 0)
+    return "Please upload at least one club photo";
+
   return null;
 }
 
@@ -156,7 +164,7 @@ async function uploadToFolder(file: any) {
 export async function createClubOwnerFromPending(userId: number) {
   const draft: any = await strapi.db.query(PENDING_UID).findOne({
     where: { user: userId },
-    populate: ["logo", "clubPhotos", "club_owner_documents"],
+    populate: ["logo", "club_photos", "club_owner_documents"],
   });
 
   if (!draft) return null;
@@ -171,8 +179,12 @@ export async function createClubOwnerFromPending(userId: number) {
     filters: { pending_club_owner: { id: draft.id } },
   });
 
+  const myPhotos: any = await strapi.entityService.findMany(CLUB_PHOTO_UID, {
+    filters: { pending_club_owner: { id: draft.id } },
+  });
+
   const logoId = draft.logo?.id ?? null;
-  const photoIds = draft.clubPhotos?.map((p: any) => p.id) ?? [];
+  const photoIds = (myPhotos || []).map((p: any) => p.id);
   const docIds = (myDocs || []).map((d: any) => d.id);
   const weekdayScheduling = orderWeekdayScheduling(
     normalizeWeekdayScheduling(draft.weekdayScheduling),
@@ -203,7 +215,9 @@ export async function createClubOwnerFromPending(userId: number) {
       facilities: draft.facilities,
       services: draft.services,
       club_services: (serviceIds.length > 0 ? serviceIds : undefined) as any,
-      club_facilities: (facilityIds.length > 0 ? facilityIds : undefined) as any,
+      club_facilities: (facilityIds.length > 0
+        ? facilityIds
+        : undefined) as any,
       latitude: draft.latitude,
       longitude: draft.longitude,
       clubAddress: draft.clubAddress,
@@ -211,7 +225,7 @@ export async function createClubOwnerFromPending(userId: number) {
       city: draft.city,
       state: draft.state,
       logo: logoId,
-      clubPhotos: photoIds,
+      club_photos: photoIds,
       club_owner_documents: docIds,
       publishedAt: new Date(),
     },
@@ -219,6 +233,12 @@ export async function createClubOwnerFromPending(userId: number) {
 
   for (const doc of myDocs) {
     await strapi.entityService.update(GOV_DOC_UID, doc.id, {
+      data: { pending_club_owner: null },
+    });
+  }
+
+  for (const photo of myPhotos) {
+    await strapi.entityService.update(CLUB_PHOTO_UID, photo.id, {
       data: { pending_club_owner: null },
     });
   }
@@ -542,6 +562,117 @@ export default {
   },
 
   /* ===================================================== */
+  /* STEP 6A — UPLOAD SINGLE CLUB PHOTO WITH TEXT (CAN CALL MULTIPLE TIMES) */
+  async uploadClubPhoto(ctx: Context) {
+    const draft: any = await getEditableDraft(ctx);
+    if (!draft) return;
+
+    const body = getBody(ctx);
+    const files: any = ctx.request.files;
+
+    const photoFile =
+      files?.image || files?.clubPhotos || files?.images || files?.file || files?.photo;
+
+    if (!photoFile) return ctx.badRequest("Please upload a club photo");
+
+    const uploadedPhotos = await uploadToFolder(photoFile);
+    const photoIds = uploadedPhotos.map((f: any) => f.id);
+
+    // Create club photo entry in club_photos collection with imageInfo and uploaded images
+    const newPhoto: any = await strapi.entityService.create(CLUB_PHOTO_UID, {
+      data: {
+        imageInfo: body.imageInfo || body.description || "",
+        images: photoIds,
+        pending_club_owner: draft.id,
+      },
+      populate: ["images"],
+    });
+
+    const fileUrl = newPhoto.images?.[0]
+      ? `${strapi.config.server.url}${newPhoto.images[0].url}`
+      : null;
+
+    ctx.send({
+      success: true,
+      message: "Club photo uploaded successfully",
+      photo: {
+        id: newPhoto.id,
+        documentId: newPhoto.documentId,
+        imageInfo: newPhoto.imageInfo,
+        fileUrl,
+        images: newPhoto.images,
+      },
+    });
+  },
+
+  /* ===================================================== */
+  /* STEP 6B — GET MY UPLOADED CLUB PHOTOS */
+  async getMyClubPhotos(ctx: Context) {
+    const user = ctx.state.user;
+    if (!user) {
+      return ctx.unauthorized();
+    }
+
+    const draft: any = await getDraft(user.id);
+    if (!draft) {
+      return ctx.send({ data: [] });
+    }
+
+    const photos: any = await strapi.entityService.findMany(CLUB_PHOTO_UID, {
+      filters: { pending_club_owner: { id: draft.id } },
+      populate: ["images"],
+      sort: { createdAt: "desc" },
+    });
+
+    const response = (photos || []).map((p: any) => ({
+      id: p.id,
+      documentId: p.documentId,
+      imageInfo: p.imageInfo,
+      uploadedAt: p.createdAt,
+      fileUrl: p.images?.[0]
+        ? `${strapi.config.server.url}${p.images[0].url}`
+        : null
+    }));
+
+    ctx.send({ data: response });
+  },
+
+  /* ===================================================== */
+  /* STEP 6C — DELETE CLUB PHOTO BY DOCUMENTID */
+  async deleteClubPhoto(ctx: Context) {
+    const draft: any = await getEditableDraft(ctx);
+    if (!draft) return;
+
+    const { id } = ctx.params;
+    if (!id) return ctx.badRequest("Photo documentId is required");
+
+    const photo: any = await strapi.db.query(CLUB_PHOTO_UID).findOne({
+      where: {
+        $or: [{ documentId: id }, { id: isNaN(Number(id)) ? -1 : Number(id) }],
+        pending_club_owner: draft.id,
+      },
+      populate: ["images", "pending_club_owner"],
+    });
+
+    if (!photo) {
+      return ctx.notFound("Club photo not found");
+    }
+
+    if (photo.images && Array.isArray(photo.images)) {
+      for (const img of photo.images) {
+        await strapi.plugin("upload").service("upload").remove(img);
+      }
+    } else if (photo.images) {
+      await strapi.plugin("upload").service("upload").remove(photo.images);
+    }
+
+    await strapi.entityService.delete(CLUB_PHOTO_UID, photo.id);
+
+    ctx.send({ success: true, message: "Club photo deleted successfully" });
+  },
+
+  /* ===================================================== */
+  /* STEP 6 FINAL — CONFIRM ONBOARDING & SEND FOR APPROVAL */
   async uploadClubPhotos(ctx: Context) {
     const draft: any = await getEditableDraft(ctx);
     if (!draft) return;
@@ -550,16 +681,9 @@ export default {
     if (validationError) return ctx.badRequest(validationError);
 
     const user = ctx.state.user;
-    const files: any = ctx.request.files;
-
-    if (!files?.clubPhotos) return ctx.badRequest("Please upload club photos");
-
-    const uploadedPhotos = await uploadToFolder(files.clubPhotos);
-    const photoIds = uploadedPhotos.map((f: any) => f.id);
 
     await strapi.entityService.update(PENDING_UID, draft.id, {
       data: {
-        clubPhotos: photoIds,
         status: "completed",
         currentStep: 6,
       },

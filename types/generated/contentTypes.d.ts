@@ -637,7 +637,7 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
     singularName: 'club-owner';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     city: Schema.Attribute.String;
@@ -653,6 +653,10 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       'oneToMany',
       'api::club-owner-document.club-owner-document'
     >;
+    club_photos: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::club-photo.club-photo'
+    >;
     club_services: Schema.Attribute.Relation<
       'oneToMany',
       'api::club-service.club-service'
@@ -663,10 +667,6 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
     clubName: Schema.Attribute.String;
-    clubPhotos: Schema.Attribute.Media<
-      'images' | 'files' | 'videos' | 'audios',
-      true
-    >;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -704,6 +704,43 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       'plugin::users-permissions.user'
     >;
     weekdayScheduling: Schema.Attribute.JSON;
+  };
+}
+
+export interface ApiClubPhotoClubPhoto extends Struct.CollectionTypeSchema {
+  collectionName: 'club_photos';
+  info: {
+    displayName: 'club-photo';
+    pluralName: 'club-photos';
+    singularName: 'club-photo';
+  };
+  options: {
+    draftAndPublish: false;
+  };
+  attributes: {
+    club_owner: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::club-owner.club-owner'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    imageInfo: Schema.Attribute.String;
+    images: Schema.Attribute.Media<'images', true>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::club-photo.club-photo'
+    > &
+      Schema.Attribute.Private;
+    pending_club_owner: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::pending-club-owner.pending-club-owner'
+    >;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
   };
 }
 
@@ -1075,6 +1112,10 @@ export interface ApiPendingClubOwnerPendingClubOwner
       'oneToMany',
       'api::club-owner-document.club-owner-document'
     >;
+    club_photos: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::club-photo.club-photo'
+    >;
     club_services: Schema.Attribute.Relation<
       'oneToMany',
       'api::club-service.club-service'
@@ -1082,7 +1123,6 @@ export interface ApiPendingClubOwnerPendingClubOwner
     clubAddress: Schema.Attribute.String;
     clubCategory: Schema.Attribute.Enumeration<['Premium', 'Luxury']>;
     clubName: Schema.Attribute.String;
-    clubPhotos: Schema.Attribute.Media<'images', true>;
     createdAt: Schema.Attribute.DateTime;
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1727,6 +1767,7 @@ declare module '@strapi/strapi' {
       'api::club-facility.club-facility': ApiClubFacilityClubFacility;
       'api::club-owner-document.club-owner-document': ApiClubOwnerDocumentClubOwnerDocument;
       'api::club-owner.club-owner': ApiClubOwnerClubOwner;
+      'api::club-photo.club-photo': ApiClubPhotoClubPhoto;
       'api::club-service.club-service': ApiClubServiceClubService;
       'api::device-token.device-token': ApiDeviceTokenDeviceToken;
       'api::local-membership-plan.local-membership-plan': ApiLocalMembershipPlanLocalMembershipPlan;

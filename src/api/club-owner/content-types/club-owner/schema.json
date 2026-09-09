@@ -7,7 +7,7 @@
     "displayName": "Club-Owner"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
@@ -29,28 +29,13 @@
     "logo": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ]
+      "allowedTypes": ["images", "files", "videos", "audios"]
     },
     "clubName": {
       "type": "string"
     },
     "weekdayScheduling": {
       "type": "json"
-    },
-    "clubPhotos": {
-      "type": "media",
-      "multiple": true,
-      "allowedTypes": [
-        "images",
-        "files",
-        "videos",
-        "audios"
-      ]
     },
     "facilities": {
       "type": "json"
@@ -90,10 +75,13 @@
     },
     "clubCategory": {
       "type": "enumeration",
-      "enum": [
-        "Premium",
-        "Luxury"
-      ]
+      "enum": ["Premium", "Luxury"]
+    },
+    "club_photos": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::club-photo.club-photo",
+      "mappedBy": "club_owner"
     },
     "local_membership_plans": {
       "type": "relation",

@@ -483,7 +483,7 @@ export default factories.createCoreController(
         }));
 
         return ctx.send({
-          data
+          data,
         });
       } catch (error) {
         strapi.log.error("Error fetching today's check-ins:", error);

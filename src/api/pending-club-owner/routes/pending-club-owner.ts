@@ -72,10 +72,33 @@ export default {
       config: { auth: {} },
     },
 
-    /* STEP 6 — UPLOAD PHOTOS & CREATE CLUB */
+    /* STEP 6 — CLUB PHOTOS & SUBMIT ONBOARDING */
+    {
+      method: "GET",
+      path: "/pending-club-owner/club-photos",
+      handler: "pending-club-owner.getMyClubPhotos",
+      config: { auth: {} },
+    },
     {
       method: "POST",
-      path: "/pending-club-owner/upload-club-photos",
+      path: "/pending-club-owner/upload-club-photo",
+      handler: "pending-club-owner.uploadClubPhoto",
+      config: {
+        auth: {},
+        body: {
+          multipart: true,
+        },
+      },
+    },
+    {
+      method: "DELETE",
+      path: "/pending-club-owner/club-photos/:id",
+      handler: "pending-club-owner.deleteClubPhoto",
+      config: { auth: {} },
+    },
+    {
+      method: "POST",
+      path: "/pending-club-owner/confirm",
       handler: "pending-club-owner.uploadClubPhotos",
       config: {
         auth: {},

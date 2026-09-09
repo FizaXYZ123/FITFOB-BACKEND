@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "club_photos",
+  "info": {
+    "singularName": "club-photo",
+    "pluralName": "club-photos",
+    "displayName": "club-photo"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "imageInfo": {
+      "type": "string"
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "club_owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-owner.club-owner",
+      "inversedBy": "club_photos"
+    },
+    "pending_club_owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::pending-club-owner.pending-club-owner",
+      "inversedBy": "club_photos"
+    }
+  }
+}
