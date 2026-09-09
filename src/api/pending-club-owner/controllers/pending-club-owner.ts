@@ -571,7 +571,7 @@ export default {
     const files: any = ctx.request.files;
 
     const photoFile =
-      files?.image || files?.clubPhotos || files?.images || files?.file || files?.photo;
+      files?.image || files?.club_photos || files?.clubPhotos || files?.images || files?.file || files?.photo;
 
     if (!photoFile) return ctx.badRequest("Please upload a club photo");
 

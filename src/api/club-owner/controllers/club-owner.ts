@@ -12,7 +12,9 @@ import {
 const POPULATE: any = {
   user: true,
   logo: true,
-  clubPhotos: true,
+  club_photos: {
+    populate: ["images"],
+  },
   club_owner_documents: {
     populate: ["File"],
   },
@@ -58,14 +60,15 @@ export default factories.createCoreController(
             clubName: item.clubName,
             clubId: item.clubId,
             phoneNumber: item.phoneNumber,
-            logo: item.logo.formats.thumbnail.url,
+            logo:
+              item.logo?.formats?.thumbnail?.url || item.logo?.url || null,
             createdAt: item.createdAt,
             clubAddress: item.clubAddress,
             city: item.city,
             state: item.state,
             user: {
-              email: item.user.email,
-              verification_status: item.user.verification_status,
+              email: item.user?.email || null,
+              verification_status: item.user?.verification_status || null,
             },
             pincode: item.pincode,
           };
@@ -328,7 +331,9 @@ export default factories.createCoreController(
             populate: {
               user: true,
               logo: true,
-              clubPhotos: true,
+              club_photos: {
+                populate: ["images"],
+              },
               club_owner_documents: true,
             },
           });
