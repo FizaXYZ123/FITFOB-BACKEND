@@ -401,5 +401,95 @@ export default factories.createCoreController(
         return ctx.internalServerError("Something went wrong");
       }
     },
+
+    /* =======================================================
+       TODAY'S CHECK INS
+    ======================================================= */
+    async todayCheckins(ctx) {
+      try {
+        const user = ctx.state.user;
+
+        // 1. Make sure the user is logged in
+        if (!user) {
+          return ctx.unauthorized("You must be logged in");
+        }
+
+        // 2. Find the club owner associated with the logged-in user
+        const clubOwner = await strapi.db
+          .query("api::club-owner.club-owner")
+          .findOne({
+            where: {
+              user: user.id,
+            },
+          });
+
+        if (!clubOwner) {
+          return ctx.notFound("Club owner profile not found for this user");
+        }
+
+        // 3. Get today's date range
+        const now = new Date();
+
+        const startOfDay = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          0,
+          0,
+          0,
+          0,
+        );
+
+        const endOfDay = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          23,
+          59,
+          59,
+          999,
+        );
+
+        // 4. Fetch only this club owner's check-ins for today
+        const checkins = await strapi.db
+          .query("api::client-checkin.client-checkin")
+          .findMany({
+            where: {
+              club_owner: clubOwner.id,
+              checkinTime: {
+                $gte: startOfDay,
+                $lte: endOfDay,
+              },
+            },
+            populate: {
+              client_detail: {
+                populate: {
+                  selfieUpload: true,
+                },
+              },
+            },
+            orderBy: {
+              checkinTime: "desc",
+            },
+          });
+
+        // 5. Format response
+        const data = checkins.map((checkin) => ({
+          id: checkin.id,
+          clientName: checkin.client_detail?.name || null,
+          selfieUploadUrl: checkin.client_detail?.selfieUpload?.url || null,
+          checkinTime: checkin.checkinTime,
+          subscriptionType: checkin.subscriptionType,
+        }));
+
+        return ctx.send({
+          data
+        });
+      } catch (error) {
+        strapi.log.error("Error fetching today's check-ins:", error);
+
+        return ctx.internalServerError("Unable to fetch today's check-ins");
+      }
+    },
   }),
 );

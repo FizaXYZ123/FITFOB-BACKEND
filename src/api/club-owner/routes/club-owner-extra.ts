@@ -39,6 +39,14 @@ export default {
         config: {     
         auth: {},
     }
-    }
+    },
+    {
+      method: "GET",
+      path: "/club-owners/today-checkins",
+      handler: "club-owner.todayCheckins",
+      config: {
+      auth:{}
+      },
+    },
   ],
 };  
