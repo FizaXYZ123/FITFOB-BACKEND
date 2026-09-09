@@ -736,13 +736,13 @@ export default {
           currentStep: item.currentStep,
           ownerName: item.ownerName,
           clubName: item.clubName,
-          logo: item.logo.formats.thumbnail.url,
+          logo: item.logo?.formats?.thumbnail?.url || item.logo?.url || null,
           createdAt: item.createdAt,
           clubAddress: item.clubAddress,
           city: item.city,
           state: item.state,
           user: {
-            verification_status: item.user.verification_status,
+            verification_status: item.user?.verification_status || null,
           },
           pincode: item.pincode,
         };
@@ -801,7 +801,9 @@ export default {
             club_owner_documents: {
               populate: ["File"],
             },
-            clubPhotos: true,
+            club_photos: {
+              populate: ["images"],
+            },
             club_services: {
               populate: ["logo"],
             },
@@ -902,7 +904,9 @@ export default {
             club_owner_documents: {
               populate: ["File"],
             },
-            clubPhotos: true,
+            club_photos: {
+              populate: ["images"],
+            },
             club_services: {
               populate: ["logo"],
             },
