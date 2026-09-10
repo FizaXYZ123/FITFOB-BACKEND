@@ -1,14 +1,17 @@
 export default () => {
-    return async (ctx, next) => {
+    return async (ctx: any, next: any) => {
         try {
             await next();
         } catch (err: any) {
-            strapi.log.error("GLOBAL ERROR:", err);
-
             const status =
                 err.status ||
                 err.statusCode ||
-                (err.name === "ForbiddenError" ? 403 : 500);
+                (err.name === "ForbiddenError" ? 403 : err.name === "NotFoundError" ? 404 : 500);
+
+            if (status !== 404 && err.name !== "NotFoundError") {
+                strapi.log.error("GLOBAL ERROR:", err);
+            }
+
             ctx.status = status;
 
             ctx.body = {

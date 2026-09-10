@@ -702,6 +702,17 @@ export default {
       });
     }
 
+    if (fullUser?.verification_status === "rejected") {
+      await strapi.db.query("plugin::users-permissions.user").update({
+        where: { id: user.id },
+        data: {
+          verification_status: "pending",
+          rejection_reason: null,
+          rejected_by: null,
+        },
+      });
+    }
+
     ctx.send({
       success: true,
       message:
@@ -762,15 +773,6 @@ export default {
         });
       }
 
-      // finalData = finalData.map((item) => {
-      //   const obj = JSON.parse(JSON.stringify(item));
-
-      //   return {
-      //     ...obj,
-      //     isRead: (obj.read_by_admins || []).length > 0,
-      //   };
-      // });
-
       ctx.body = finalData;
     } catch (err) {
       strapi.log.error("FETCH UNVERIFIED CLUB OWNERS ERROR:", err);
@@ -799,10 +801,20 @@ export default {
             logo: true,
             user: true,
             club_owner_documents: {
-              populate: ["File"],
+              populate: {
+                File: {
+                  fields: ['url', 'width', 'height', 'size', 'formats', 'ext', 'name', 'mime', 'createdAt'],
+                }
+              },
+              fields: ['documentName', 'createdAt', "publishedAt"]
             },
             club_photos: {
-              populate: ["images"],
+              fields: ["imageInfo"],
+              populate: {
+                images: {
+                  fields: ["url", "width", "height", "size", "formats", "ext", "name", "mime"],
+                },
+              },
             },
             club_services: {
               populate: ["logo"],

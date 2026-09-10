@@ -1764,6 +1764,10 @@ export interface PluginUsersPermissionsUser
       Schema.Attribute.SetMinMaxLength<{
         minLength: 6;
       }>;
+    pending_club_owner: Schema.Attribute.Relation<
+      'oneToOne',
+      'api::pending-club-owner.pending-club-owner'
+    >;
     phoneNumber: Schema.Attribute.String;
     provider: Schema.Attribute.String;
     publishedAt: Schema.Attribute.DateTime;

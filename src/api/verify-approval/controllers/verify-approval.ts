@@ -1,5 +1,7 @@
 import { createClubOwnerFromPending } from "../../pending-club-owner/controllers/pending-club-owner";
 
+const PENDING_CLUB_OWNER_UID = "api::pending-club-owner.pending-club-owner";
+
 export default {
   /* ---------- APPROVE USER ---------- */
   async verificationApproved(ctx: any) {
@@ -88,6 +90,7 @@ export default {
         .query("plugin::users-permissions.user")
         .findOne({
           where: { id },
+          populate: ["pending_club_owner"],
         });
 
       if (!user) {
@@ -104,6 +107,53 @@ export default {
         },
       });
 
+      /* ---------- RESET PENDING CLUB OWNER CURRENT STEP TO 4 ---------- */
+      // 1. Check direct relation from user
+      if (user.pending_club_owner?.id) {
+        await strapi.db.query(PENDING_CLUB_OWNER_UID).update({
+          where: { id: user.pending_club_owner.id },
+          data: {
+            currentStep: 4,
+            status: "draft",
+          },
+        });
+      }
+
+      // 2. Query pending club owners by user relation
+      const pendingOwners = await strapi.db
+        .query(PENDING_CLUB_OWNER_UID)
+        .findMany({
+          where: { user: user.id },
+        });
+
+      for (const pending of pendingOwners || []) {
+        await strapi.db.query(PENDING_CLUB_OWNER_UID).update({
+          where: { id: pending.id },
+          data: {
+            currentStep: 4,
+            status: "draft",
+          },
+        });
+      }
+
+      // 3. Fallback check using entityService
+      if ((!pendingOwners || pendingOwners.length === 0) && !user.pending_club_owner?.id) {
+        const drafts: any[] = await strapi.entityService.findMany(
+          PENDING_CLUB_OWNER_UID,
+          {
+            filters: { user: { id: user.id } },
+          },
+        );
+        for (const draft of drafts || []) {
+          await strapi.entityService.update(PENDING_CLUB_OWNER_UID, draft.id, {
+            data: {
+              currentStep: 4,
+              status: "draft",
+            },
+          });
+        }
+      }
+
       const updatedUser = await strapi.db
         .query("plugin::users-permissions.user")
         .findOne({
@@ -116,6 +166,7 @@ export default {
             rejected_by: {
               populate: ["role"],
             },
+            pending_club_owner: true,
           },
         });
 

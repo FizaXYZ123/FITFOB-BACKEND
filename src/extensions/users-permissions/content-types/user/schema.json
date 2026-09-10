@@ -127,6 +127,12 @@
       "relation": "oneToOne",
       "target": "api::club-owner.club-owner",
       "inversedBy": "user"
+    },
+    "pending_club_owner": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "api::pending-club-owner.pending-club-owner",
+      "inversedBy": "user"
     }
   }
 }
