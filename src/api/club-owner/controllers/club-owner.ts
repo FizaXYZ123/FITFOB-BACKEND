@@ -273,6 +273,109 @@ export default factories.createCoreController(
           }
         }
 
+        // 📝 Log Activity (with detailed list of modified fields)
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            const changedDetails: string[] = [];
+
+            const simpleFields = [
+              { key: "clubName", label: "clubName" },
+              { key: "ownerName", label: "ownerName" },
+              { key: "phoneNumber", label: "phoneNumber" },
+              { key: "email", label: "email" },
+              { key: "clubAddress", label: "clubAddress" },
+              { key: "city", label: "city" },
+              { key: "state", label: "state" },
+              { key: "pincode", label: "pincode" },
+              { key: "clubCategory", label: "clubCategory" },
+            ];
+
+            for (const field of simpleFields) {
+              if (
+                data[field.key] !== undefined &&
+                String(data[field.key]) !== String(existing[field.key] ?? "")
+              ) {
+                changedDetails.push(
+                  `${field.label}: '${existing[field.key] ?? ""}' -> '${
+                    data[field.key]
+                  }'`,
+                );
+              }
+            }
+
+            if (data.weekdayScheduling !== undefined) {
+              changedDetails.push("weekdayScheduling");
+            }
+            if (
+              data.facilities !== undefined ||
+              data.club_facilities !== undefined
+            ) {
+              changedDetails.push("facilities");
+            }
+            if (
+              data.services !== undefined ||
+              data.club_services !== undefined
+            ) {
+              changedDetails.push("services");
+            }
+            if (data.logo !== undefined) {
+              changedDetails.push("logo");
+            }
+            if (
+              (data.latitude !== undefined &&
+                String(data.latitude) !== String(existing.latitude ?? "")) ||
+              (data.longitude !== undefined &&
+                String(data.longitude) !== String(existing.longitude ?? ""))
+            ) {
+              changedDetails.push("location (lat/long)");
+            }
+
+            const handledKeys = new Set([
+              "clubName",
+              "ownerName",
+              "phoneNumber",
+              "email",
+              "clubAddress",
+              "city",
+              "state",
+              "pincode",
+              "weekdayScheduling",
+              "facilities",
+              "services",
+              "logo",
+              "latitude",
+              "longitude",
+            ]);
+
+            for (const key of Object.keys(data)) {
+              if (!handledKeys.has(key) && data[key] !== undefined) {
+                changedDetails.push(key);
+              }
+            }
+
+            const changeSummary =
+              changedDetails.length > 0
+                ? ` (Changed: ${changedDetails.join(", ")})`
+                : "";
+
+            activityLogService.logActivity({
+              clubOwnerId: entity?.documentId || entity?.id || id,
+              category: "profile",
+              actionType: "UPDATE",
+              entityName: "Club Profile",
+              entityId: entity?.documentId || entity?.id || id,
+              description: `Updated club profile details for ${
+                entity?.clubName || existing?.clubName || "club"
+              }${changeSummary}`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn("[ActivityLog] Failed to log club update:", logErr);
+        }
+
         ctx.body = updatedFields;
       } catch (err) {
         strapi.log.error("UPDATE CLUB OWNER ERROR:", err);

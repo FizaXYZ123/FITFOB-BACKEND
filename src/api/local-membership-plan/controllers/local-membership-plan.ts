@@ -364,6 +364,28 @@ export default factories.createCoreController(
           });
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            activityLogService.logActivity({
+              clubOwnerId: ownerDocId || ownerId,
+              category: "membership_plans",
+              actionType: "CREATE",
+              entityName: "Local Membership Plan",
+              entityId: createdPlan?.documentId || createdPlan?.id,
+              description: `Created local membership plan '${planName.trim()}' (Price: ₹${price}, Duration: ${monthDuration} months)`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn("[ActivityLog] Failed to log plan creation:", logErr);
+        }
+
+>>>>>>> Stashed changes
         return ctx.send(
           {
             message: "Local membership plan created successfully",
@@ -543,6 +565,31 @@ export default factories.createCoreController(
           });
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            activityLogService.logActivity({
+              clubOwnerId: ownerDocId || ownerRecord.id,
+              category: "membership_plans",
+              actionType: "CREATE",
+              entityName: "Local Membership Plan",
+              entityId: createdPlan?.documentId || createdPlan?.id,
+              description: `Admin created local membership plan '${planName.trim()}' (Price: ₹${price}, Duration: ${monthDuration} months)`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn(
+            "[ActivityLog] Failed to log admin plan creation:",
+            logErr,
+          );
+        }
+
+>>>>>>> Stashed changes
         return ctx.send(
           {
             message:
@@ -749,7 +796,20 @@ export default factories.createCoreController(
 
         const existing: any = await strapi.db.query(LOCAL_PLAN_UID).findOne({
           where: { documentId },
+<<<<<<< Updated upstream
           select: ["id", "documentId"],
+=======
+          select: [
+            "id",
+            "documentId",
+            "planName",
+            "price",
+            "monthDuration",
+            "description",
+            "isActive",
+            "validUpto",
+          ],
+>>>>>>> Stashed changes
           populate: {
             club_owner: {
               select: ["id", "documentId", "clubId"],
@@ -850,6 +910,91 @@ export default factories.createCoreController(
           );
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity (with detailed list of modified fields)
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            const ownerIdentifier =
+              existing.club_owner?.documentId ||
+              existing.club_owner?.id ||
+              existing.club_owner;
+
+            const changedDetails: string[] = [];
+
+            if (
+              updateData.planName !== undefined &&
+              updateData.planName !== existing.planName
+            ) {
+              changedDetails.push(
+                `planName: '${existing.planName ?? ""}' -> '${updateData.planName}'`,
+              );
+            }
+            if (
+              updateData.price !== undefined &&
+              Number(updateData.price) !== Number(existing.price)
+            ) {
+              changedDetails.push(
+                `price: ₹${existing.price ?? 0} -> ₹${updateData.price}`,
+              );
+            }
+            if (
+              updateData.monthDuration !== undefined &&
+              Number(updateData.monthDuration) !== Number(existing.monthDuration)
+            ) {
+              changedDetails.push(
+                `monthDuration: ${existing.monthDuration ?? 0}mo -> ${updateData.monthDuration}mo`,
+              );
+            }
+            if (
+              updateData.isActive !== undefined &&
+              Boolean(updateData.isActive) !== Boolean(existing.isActive)
+            ) {
+              changedDetails.push(
+                `isActive: ${existing.isActive ? "true" : "false"} -> ${
+                  updateData.isActive ? "true" : "false"
+                }`,
+              );
+            }
+            if (
+              updateData.validUpto !== undefined &&
+              String(updateData.validUpto) !== String(existing.validUpto)
+            ) {
+              changedDetails.push(
+                `validUpto: '${existing.validUpto ?? ""}' -> '${updateData.validUpto}'`,
+              );
+            }
+            if (
+              updateData.description !== undefined &&
+              updateData.description !== existing.description
+            ) {
+              changedDetails.push("description");
+            }
+
+            const changeSummary =
+              changedDetails.length > 0
+                ? ` (Changed: ${changedDetails.join(", ")})`
+                : "";
+
+            activityLogService.logActivity({
+              clubOwnerId: ownerIdentifier,
+              category: "membership_plans",
+              actionType: "UPDATE",
+              entityName: "Local Membership Plan",
+              entityId: existing.documentId || existing.id,
+              description: `Updated local membership plan '${
+                existing.planName || updated?.planName || ""
+              }'${changeSummary}`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn("[ActivityLog] Failed to log plan update:", logErr);
+        }
+
+>>>>>>> Stashed changes
         return ctx.send({
           message: "Local membership plan updated successfully",
           data: updated,
@@ -879,7 +1024,11 @@ export default factories.createCoreController(
 
         const existing: any = await strapi.db.query(LOCAL_PLAN_UID).findOne({
           where: { documentId },
+<<<<<<< Updated upstream
           select: ["id", "documentId"],
+=======
+          select: ["id", "documentId", "planName"],
+>>>>>>> Stashed changes
           populate: {
             club_owner: {
               select: ["id", "documentId", "clubId"],
@@ -916,6 +1065,34 @@ export default factories.createCoreController(
           await strapi.entityService.delete(LOCAL_PLAN_UID, existing.id);
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            const ownerIdentifier =
+              existing.club_owner?.documentId ||
+              existing.club_owner?.id ||
+              existing.club_owner;
+            activityLogService.logActivity({
+              clubOwnerId: ownerIdentifier,
+              category: "membership_plans",
+              actionType: "DELETE",
+              entityName: "Local Membership Plan",
+              entityId: existing.documentId || existing.id,
+              description: `Deleted local membership plan '${
+                existing.planName || ""
+              }'`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn("[ActivityLog] Failed to log plan deletion:", logErr);
+        }
+
+>>>>>>> Stashed changes
         return ctx.send({
           message: "Local membership plan deleted successfully",
           deleted: existing,
@@ -989,7 +1166,11 @@ export default factories.createCoreController(
 
         const existing: any = await strapi.db.query(LOCAL_PLAN_UID).findOne({
           where: { documentId },
+<<<<<<< Updated upstream
           select: ["id", "documentId", "isActive"],
+=======
+          select: ["id", "documentId", "planName", "isActive"],
+>>>>>>> Stashed changes
           populate: {
             club_owner: {
               select: ["id", "documentId", "clubId"],
@@ -1056,6 +1237,37 @@ export default factories.createCoreController(
           );
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            const ownerIdentifier =
+              existing.club_owner?.documentId ||
+              existing.club_owner?.id ||
+              existing.club_owner;
+            activityLogService.logActivity({
+              clubOwnerId: ownerIdentifier,
+              category: "membership_plans",
+              actionType: "UPDATE",
+              entityName: "Local Membership Plan",
+              entityId: existing.documentId || existing.id,
+              description: `${
+                updated?.isActive ? "Activated" : "Deactivated"
+              } local membership plan '${existing.planName || ""}'`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn(
+            "[ActivityLog] Failed to log plan toggle status:",
+            logErr,
+          );
+        }
+
+>>>>>>> Stashed changes
         return ctx.send({
           message: `Local membership plan ${
             updated.isActive ? "activated" : "deactivated"

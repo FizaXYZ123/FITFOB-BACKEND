@@ -795,6 +795,33 @@ export default factories.createCoreController(
           createdSub.club_owner = formatClubOwner(createdSub.club_owner);
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            activityLogService.logActivity({
+              clubOwnerId: targetClubOwnerDocId || targetClubOwnerId,
+              category: "subscriptions",
+              actionType: "CREATE",
+              entityName: "Local Subscription",
+              entityId: createdSub?.documentId || createdSub?.id,
+              description: `Assigned offline membership to client '${
+                clientRecord?.name || clientRecord?.clientId || "Client"
+              }' for plan '${plan?.planName || "Membership"}'`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn(
+            "[ActivityLog] Failed to log subscription creation:",
+            logErr,
+          );
+        }
+
+>>>>>>> Stashed changes
         return ctx.send(
           {
             message:
@@ -1121,6 +1148,15 @@ export default factories.createCoreController(
             club_owner: {
               select: ["id", "documentId"],
             },
+<<<<<<< Updated upstream
+=======
+            client_detail: {
+              select: ["id", "documentId", "name", "clientId"],
+            },
+            local_membership_plan: {
+              select: ["id", "documentId", "planName"],
+            },
+>>>>>>> Stashed changes
           },
         });
 
@@ -1181,6 +1217,68 @@ export default factories.createCoreController(
           );
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity (with detailed list of modified fields)
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            const ownerIdentifier =
+              existing.club_owner?.documentId ||
+              existing.club_owner?.id ||
+              existing.club_owner;
+
+            const changedDetails: string[] = [];
+
+            if (
+              updateData.subscriptionStatus !== undefined &&
+              updateData.subscriptionStatus !== existing.subscriptionStatus
+            ) {
+              changedDetails.push(
+                `status: '${existing.subscriptionStatus ?? ""}' -> '${updateData.subscriptionStatus}'`,
+              );
+            }
+
+            if (
+              updateData.endDate !== undefined &&
+              String(updateData.endDate) !== String(existing.endDate)
+            ) {
+              changedDetails.push(
+                `endDate: '${existing.endDate ?? ""}' -> '${updateData.endDate}'`,
+              );
+            }
+
+            const clientName =
+              existing.client_detail?.name ||
+              existing.client_detail?.clientId ||
+              "Client";
+            const planName =
+              existing.local_membership_plan?.planName || "Membership";
+
+            const changeSummary =
+              changedDetails.length > 0
+                ? ` (Changed: ${changedDetails.join(", ")})`
+                : "";
+
+            activityLogService.logActivity({
+              clubOwnerId: ownerIdentifier,
+              category: "subscriptions",
+              actionType: "UPDATE",
+              entityName: "Local Subscription",
+              entityId: existing.documentId || existing.id,
+              description: `Updated subscription of client '${clientName}' for plan '${planName}'${changeSummary}`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn(
+            "[ActivityLog] Failed to log subscription update:",
+            logErr,
+          );
+        }
+
+>>>>>>> Stashed changes
         return ctx.send({
           message: "Local subscription updated successfully",
           data: updated,
@@ -1213,6 +1311,15 @@ export default factories.createCoreController(
             club_owner: {
               select: ["id", "documentId"],
             },
+<<<<<<< Updated upstream
+=======
+            client_detail: {
+              select: ["id", "documentId", "name", "clientId"],
+            },
+            local_membership_plan: {
+              select: ["id", "documentId", "planName"],
+            },
+>>>>>>> Stashed changes
           },
         });
 
@@ -1244,6 +1351,43 @@ export default factories.createCoreController(
           await strapi.entityService.delete(LOCAL_SUB_UID, existing.id);
         }
 
+<<<<<<< Updated upstream
+=======
+        // 📝 Log Activity
+        try {
+          const activityLogService: any = strapi.service(
+            "api::club-owner-activity-log.club-owner-activity-log",
+          );
+          if (activityLogService?.logActivity) {
+            const ownerIdentifier =
+              existing.club_owner?.documentId ||
+              existing.club_owner?.id ||
+              existing.club_owner;
+
+            const clientName =
+              existing.client_detail?.name ||
+              existing.client_detail?.clientId ||
+              "Client";
+            const planName =
+              existing.local_membership_plan?.planName || "Membership";
+
+            activityLogService.logActivity({
+              clubOwnerId: ownerIdentifier,
+              category: "subscriptions",
+              actionType: "DELETE",
+              entityName: "Local Subscription",
+              entityId: existing.documentId || existing.id,
+              description: `Deleted subscription of client '${clientName}' for plan '${planName}'`,
+            });
+          }
+        } catch (logErr) {
+          strapi.log.warn(
+            "[ActivityLog] Failed to log subscription deletion:",
+            logErr,
+          );
+        }
+
+>>>>>>> Stashed changes
         return ctx.send({
           message: "Local subscription deleted successfully",
           deleted: existing,
