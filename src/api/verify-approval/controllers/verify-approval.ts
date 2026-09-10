@@ -107,13 +107,13 @@ export default {
         },
       });
 
-      /* ---------- RESET PENDING CLUB OWNER CURRENT STEP TO 4 ---------- */
+      /* ---------- RESET PENDING CLUB OWNER CURRENT STEP TO 5 ---------- */
       // 1. Check direct relation from user
       if (user.pending_club_owner?.id) {
         await strapi.db.query(PENDING_CLUB_OWNER_UID).update({
           where: { id: user.pending_club_owner.id },
           data: {
-            currentStep: 4,
+            currentStep: 5,
             status: "draft",
           },
         });
@@ -130,7 +130,7 @@ export default {
         await strapi.db.query(PENDING_CLUB_OWNER_UID).update({
           where: { id: pending.id },
           data: {
-            currentStep: 4,
+            currentStep: 5,
             status: "draft",
           },
         });
@@ -147,7 +147,7 @@ export default {
         for (const draft of drafts || []) {
           await strapi.entityService.update(PENDING_CLUB_OWNER_UID, draft.id, {
             data: {
-              currentStep: 4,
+              currentStep: 5,
               status: "draft",
             },
           });

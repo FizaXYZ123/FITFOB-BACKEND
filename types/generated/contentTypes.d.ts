@@ -564,8 +564,8 @@ export interface ApiClubFacilityClubFacility
     draftAndPublish: false;
   };
   attributes: {
-    club_owner: Schema.Attribute.Relation<
-      'manyToOne',
+    club_owners: Schema.Attribute.Relation<
+      'manyToMany',
       'api::club-owner.club-owner'
     >;
     createdAt: Schema.Attribute.DateTime;
@@ -580,8 +580,8 @@ export interface ApiClubFacilityClubFacility
       Schema.Attribute.Private;
     logo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     name: Schema.Attribute.String;
-    pending_club_owner: Schema.Attribute.Relation<
-      'manyToOne',
+    pending_club_owners: Schema.Attribute.Relation<
+      'manyToMany',
       'api::pending-club-owner.pending-club-owner'
     >;
     publishedAt: Schema.Attribute.DateTime;
@@ -603,6 +603,7 @@ export interface ApiClubOwnerActivityLogClubOwnerActivityLog
     draftAndPublish: false;
   };
   attributes: {
+    actionType: Schema.Attribute.Enumeration<['CREATE', 'UPDATE', 'DELETE']>;
     category: Schema.Attribute.Enumeration<
       ['profile', 'membership_plans', 'subscriptions']
     >;
@@ -614,6 +615,7 @@ export interface ApiClubOwnerActivityLogClubOwnerActivityLog
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+    entityId: Schema.Attribute.String;
     entityName: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -683,7 +685,7 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       'api::client-checkin.client-checkin'
     >;
     club_facilities: Schema.Attribute.Relation<
-      'oneToMany',
+      'manyToMany',
       'api::club-facility.club-facility'
     >;
     club_owner_activity_logs: Schema.Attribute.Relation<
@@ -699,7 +701,7 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
       'api::club-photo.club-photo'
     >;
     club_services: Schema.Attribute.Relation<
-      'oneToMany',
+      'manyToMany',
       'api::club-service.club-service'
     >;
     clubAddress: Schema.Attribute.String;
@@ -796,8 +798,8 @@ export interface ApiClubServiceClubService extends Struct.CollectionTypeSchema {
     draftAndPublish: false;
   };
   attributes: {
-    club_owner: Schema.Attribute.Relation<
-      'manyToOne',
+    club_owners: Schema.Attribute.Relation<
+      'manyToMany',
       'api::club-owner.club-owner'
     >;
     createdAt: Schema.Attribute.DateTime;
@@ -812,8 +814,8 @@ export interface ApiClubServiceClubService extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     logo: Schema.Attribute.Media<'images' | 'files' | 'videos' | 'audios'>;
     name: Schema.Attribute.String;
-    pending_club_owner: Schema.Attribute.Relation<
-      'manyToOne',
+    pending_club_owners: Schema.Attribute.Relation<
+      'manyToMany',
       'api::pending-club-owner.pending-club-owner'
     >;
     publishedAt: Schema.Attribute.DateTime;
@@ -1146,7 +1148,7 @@ export interface ApiPendingClubOwnerPendingClubOwner
   attributes: {
     city: Schema.Attribute.String;
     club_facilities: Schema.Attribute.Relation<
-      'oneToMany',
+      'manyToMany',
       'api::club-facility.club-facility'
     >;
     club_owner_documents: Schema.Attribute.Relation<
@@ -1158,7 +1160,7 @@ export interface ApiPendingClubOwnerPendingClubOwner
       'api::club-photo.club-photo'
     >;
     club_services: Schema.Attribute.Relation<
-      'oneToMany',
+      'manyToMany',
       'api::club-service.club-service'
     >;
     clubAddress: Schema.Attribute.String;

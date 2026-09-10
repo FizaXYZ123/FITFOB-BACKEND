@@ -722,11 +722,24 @@ export default {
 
   async unverified(ctx: Context) {
     try {
-      const { search } = ctx.query as any;
+      const { search, status } = ctx.query as any;
 
-      const filters: any = {
-        user: { verification_status: "pending" },
-      };
+      const targetStatus =
+        !status || status === "undefined" || status === "null"
+          ? "pending"
+          : String(status).trim().toLowerCase();
+
+      const filters: any = {};
+      if (targetStatus !== "all") {
+        filters.user = { verification_status: targetStatus };
+      }
+
+      if (search?.trim()) {
+        filters.$or = [
+          { ownerName: { $containsi: search.trim() } },
+          { clubName: { $containsi: search.trim() } },
+        ];
+      }
 
       const data: any[] = await strapi.entityService.findMany(
         "api::pending-club-owner.pending-club-owner",
@@ -735,11 +748,11 @@ export default {
             logo: true,
             user: true,
           },
-
           filters,
           sort: { id: "desc" },
         },
       );
+
       const dataWithCurrentStep = data.map((item: any) => {
         return {
           id: item.id,
@@ -761,11 +774,19 @@ export default {
 
       let finalData = dataWithCurrentStep;
 
+      // 🔍 Filter by status in memory (ensures accuracy even if relation filtering is skipped by ORM)
+      if (targetStatus !== "all") {
+        finalData = finalData.filter((item: any) => {
+          const itemStatus = (item.user?.verification_status || "pending").toLowerCase();
+          return itemStatus === targetStatus;
+        });
+      }
+
       // 🔍 Global search (ownerName + clubName)
       if (search?.trim()) {
         const searchValue = search.replace(/\s+/g, "").toLowerCase();
 
-        finalData = dataWithCurrentStep.filter((item: any) => {
+        finalData = finalData.filter((item: any) => {
           const owner = item.ownerName?.replace(/\s+/g, "").toLowerCase();
           const club = item.clubName?.replace(/\s+/g, "").toLowerCase();
 

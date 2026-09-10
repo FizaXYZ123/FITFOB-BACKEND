@@ -90,15 +90,15 @@
     },
     "club_services": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::club-service.club-service",
-      "mappedBy": "pending_club_owner"
+      "mappedBy": "pending_club_owners"
     },
     "club_facilities": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::club-facility.club-facility",
-      "mappedBy": "pending_club_owner"
+      "inversedBy": "pending_club_owners"
     },
     "club_photos": {
       "type": "relation",

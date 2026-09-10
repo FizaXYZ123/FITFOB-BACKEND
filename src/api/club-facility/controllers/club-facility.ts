@@ -5,17 +5,58 @@
 import { factories } from "@strapi/strapi";
 import { Context } from "koa";
 
+/* ---------- ROLE HELPER ---------- */
+async function getUserRole(user: any): Promise<string> {
+  if (!user) return "";
+  if (user._cachedRole) return user._cachedRole;
+
+  if (user.role?.name || user.role?.type) {
+    const role =
+      user.role.name?.toLowerCase().replace(/[\s_-]+/g, "") ||
+      user.role.type?.toLowerCase().replace(/[\s_-]+/g, "") ||
+      "";
+    user._cachedRole = role;
+    return role;
+  }
+
+  const fullUser: any = await strapi.db
+    .query("plugin::users-permissions.user")
+    .findOne({
+      where: { id: user.id },
+      select: ["id"],
+      populate: {
+        role: {
+          select: ["id", "name", "type"],
+        },
+      },
+    });
+
+  const role =
+    fullUser?.role?.name?.toLowerCase().replace(/[\s_-]+/g, "") ||
+    fullUser?.role?.type?.toLowerCase().replace(/[\s_-]+/g, "") ||
+    "";
+  user._cachedRole = role;
+  return role;
+}
+
 export default factories.createCoreController(
   "api::club-facility.club-facility",
   ({ strapi }) => ({
     async find(ctx: Context) {
       try {
+        const user = ctx.state.user;
+        const role = await getUserRole(user);
+        const isClubOwner = role === "clubowner";
+
         const { isActive } = ctx.query as any;
 
         const filters: any = {};
 
-        // By default return all. If isActive is provided as true/false, filter by that.
-        if (isActive === "true" || isActive === true) {
+        // For clubOwner: only active facilities are returned.
+        // For others: if isActive is provided as true/false, filter by that; otherwise return all.
+        if (isClubOwner) {
+          filters.isActive = true;
+        } else if (isActive === "true" || isActive === true) {
           filters.isActive = true;
         } else if (isActive === "false" || isActive === false) {
           filters.isActive = false;
@@ -43,6 +84,16 @@ export default factories.createCoreController(
               sort: { createdAt: "desc" },
             },
           );
+        }
+
+        // For clubOwner: return array of string names for active facilities
+        if (isClubOwner) {
+          const names: string[] = (entries || [])
+            .filter((item: any) => item.isActive !== false && item.name)
+            .map((item: any) => item.name);
+
+          ctx.body = names;
+          return;
         }
 
         const data = (entries || []).map((item: any) => {
@@ -305,5 +356,83 @@ export default factories.createCoreController(
         return ctx.internalServerError("Failed to create club facility");
       }
     },
+
+    async delete(ctx: Context) {
+      try {
+        const { id } = ctx.params;
+
+        if (!id) {
+          return ctx.badRequest("Document ID is required");
+        }
+
+        const isNumeric = !isNaN(Number(id)) && /^\d+$/.test(String(id).trim());
+
+        let item: any = null;
+        if ((strapi as any).documents && !isNumeric) {
+          try {
+            item = await (strapi as any)
+              .documents("api::club-facility.club-facility")
+              .findOne({
+                documentId: String(id).trim(),
+                populate: {
+                  logo: true,
+                },
+              });
+          } catch (e) {
+            // fallback below
+          }
+        }
+
+        if (!item) {
+          item = await strapi.db
+            .query("api::club-facility.club-facility")
+            .findOne({
+              where: isNumeric
+                ? { $or: [{ documentId: String(id).trim() }, { id: Number(id) }] }
+                : { documentId: String(id).trim() },
+              populate: {
+                logo: true,
+              },
+            });
+        }
+
+        if (!item) {
+          return ctx.notFound("Club facility not found");
+        }
+
+        let deleted = false;
+        if ((strapi as any).documents && item.documentId) {
+          try {
+            await (strapi as any)
+              .documents("api::club-facility.club-facility")
+              .delete({
+                documentId: item.documentId,
+              });
+            deleted = true;
+          } catch (docErr) {
+            strapi.log.warn(
+              "documents.delete error in club-facility delete:",
+              docErr,
+            );
+          }
+        }
+
+        if (!deleted && item.id) {
+          await strapi.entityService.delete(
+            "api::club-facility.club-facility",
+            item.id,
+          );
+        }
+
+        ctx.body = {
+          success: true,
+          message: "Club facility deleted successfully",
+        };
+      } catch (error) {
+        strapi.log.error("DELETE CLUB FACILITY ERROR:", error);
+        return ctx.internalServerError("Failed to delete club facility");
+      }
+    },
   }),
 );
+

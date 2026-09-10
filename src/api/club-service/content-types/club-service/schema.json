@@ -28,15 +28,15 @@
       "type": "boolean",
       "default": true
     },
-    "club_owner": {
+    "club_owners": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "manyToMany",
       "target": "api::club-owner.club-owner",
       "inversedBy": "club_services"
     },
-    "pending_club_owner": {
+    "pending_club_owners": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "manyToMany",
       "target": "api::pending-club-owner.pending-club-owner",
       "inversedBy": "club_services"
     }
