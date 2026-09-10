@@ -600,7 +600,7 @@ export interface ApiClubOwnerActivityLogClubOwnerActivityLog
     singularName: 'club-owner-activity-log';
   };
   options: {
-    draftAndPublish: true;
+    draftAndPublish: false;
   };
   attributes: {
     category: Schema.Attribute.Enumeration<

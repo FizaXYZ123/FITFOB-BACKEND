@@ -7,7 +7,7 @@
     "displayName": "club-owner-activity-logs"
   },
   "options": {
-    "draftAndPublish": true
+    "draftAndPublish": false
   },
   "pluginOptions": {},
   "attributes": {
