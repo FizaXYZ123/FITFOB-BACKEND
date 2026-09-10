@@ -29,7 +29,12 @@
     "logo": {
       "type": "media",
       "multiple": false,
-      "allowedTypes": ["images", "files", "videos", "audios"]
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     },
     "clubName": {
       "type": "string"
@@ -75,7 +80,10 @@
     },
     "clubCategory": {
       "type": "enumeration",
-      "enum": ["Premium", "Luxury"]
+      "enum": [
+        "Premium",
+        "Luxury"
+      ]
     },
     "club_photos": {
       "type": "relation",
@@ -114,6 +122,12 @@
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::club-facility.club-facility",
+      "mappedBy": "club_owner"
+    },
+    "club_owner_activity_logs": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::club-owner-activity-log.club-owner-activity-log",
       "mappedBy": "club_owner"
     }
   }

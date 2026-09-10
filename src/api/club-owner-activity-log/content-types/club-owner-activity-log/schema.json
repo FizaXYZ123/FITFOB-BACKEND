@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "club_owner_activity_logs",
+  "info": {
+    "singularName": "club-owner-activity-log",
+    "pluralName": "club-owner-activity-logs",
+    "displayName": "club-owner-activity-logs"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "club_owner": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::club-owner.club-owner",
+      "inversedBy": "club_owner_activity_logs"
+    },
+    "description": {
+      "type": "text"
+    },
+    "entityName": {
+      "type": "string"
+    },
+    "category": {
+      "type": "enumeration",
+      "enum": [
+        "profile",
+        "membership_plans",
+        "subscriptions"
+      ]
+    }
+  }
+}

@@ -591,6 +591,43 @@ export interface ApiClubFacilityClubFacility
   };
 }
 
+export interface ApiClubOwnerActivityLogClubOwnerActivityLog
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'club_owner_activity_logs';
+  info: {
+    displayName: 'club-owner-activity-logs';
+    pluralName: 'club-owner-activity-logs';
+    singularName: 'club-owner-activity-log';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    category: Schema.Attribute.Enumeration<
+      ['profile', 'membership_plans', 'subscriptions']
+    >;
+    club_owner: Schema.Attribute.Relation<
+      'manyToOne',
+      'api::club-owner.club-owner'
+    >;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    entityName: Schema.Attribute.String;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::club-owner-activity-log.club-owner-activity-log'
+    > &
+      Schema.Attribute.Private;
+    publishedAt: Schema.Attribute.DateTime;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
 export interface ApiClubOwnerDocumentClubOwnerDocument
   extends Struct.CollectionTypeSchema {
   collectionName: 'club_owner_documents';
@@ -648,6 +685,10 @@ export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
     club_facilities: Schema.Attribute.Relation<
       'oneToMany',
       'api::club-facility.club-facility'
+    >;
+    club_owner_activity_logs: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::club-owner-activity-log.club-owner-activity-log'
     >;
     club_owner_documents: Schema.Attribute.Relation<
       'oneToMany',
@@ -1765,6 +1806,7 @@ declare module '@strapi/strapi' {
       'api::client-checkin.client-checkin': ApiClientCheckinClientCheckin;
       'api::client-detail.client-detail': ApiClientDetailClientDetail;
       'api::club-facility.club-facility': ApiClubFacilityClubFacility;
+      'api::club-owner-activity-log.club-owner-activity-log': ApiClubOwnerActivityLogClubOwnerActivityLog;
       'api::club-owner-document.club-owner-document': ApiClubOwnerDocumentClubOwnerDocument;
       'api::club-owner.club-owner': ApiClubOwnerClubOwner;
       'api::club-photo.club-photo': ApiClubPhotoClubPhoto;
