@@ -552,6 +552,11 @@ export interface ApiClientDetailClientDetail
   };
 }
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
 export interface ApiClubFacilityClubFacility
   extends Struct.CollectionTypeSchema {
   collectionName: 'club_facilities';
@@ -603,6 +608,10 @@ export interface ApiClubOwnerActivityLogClubOwnerActivityLog
     draftAndPublish: false;
   };
   attributes: {
+<<<<<<< Updated upstream
+=======
+    actionType: Schema.Attribute.Enumeration<['CREATE', 'UPDATE', 'DELETE']>;
+>>>>>>> Stashed changes
     category: Schema.Attribute.Enumeration<
       ['profile', 'membership_plans', 'subscriptions']
     >;
@@ -614,6 +623,10 @@ export interface ApiClubOwnerActivityLogClubOwnerActivityLog
     createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
     description: Schema.Attribute.Text;
+<<<<<<< Updated upstream
+=======
+    entityId: Schema.Attribute.String;
+>>>>>>> Stashed changes
     entityName: Schema.Attribute.String;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
     localizations: Schema.Attribute.Relation<
@@ -666,6 +679,10 @@ export interface ApiClubOwnerDocumentClubOwnerDocument
   };
 }
 
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 export interface ApiClubOwnerClubOwner extends Struct.CollectionTypeSchema {
   collectionName: 'club_owners';
   info: {
