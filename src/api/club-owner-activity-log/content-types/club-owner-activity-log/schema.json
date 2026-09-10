@@ -23,12 +23,23 @@
     "entityName": {
       "type": "string"
     },
+    "entityId": {
+      "type": "string"
+    },
     "category": {
       "type": "enumeration",
       "enum": [
         "profile",
         "membership_plans",
         "subscriptions"
+      ]
+    },
+    "actionType": {
+      "type": "enumeration",
+      "enum": [
+        "CREATE",
+        "UPDATE",
+        "DELETE"
       ]
     }
   }
